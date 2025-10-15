@@ -56,9 +56,22 @@ export default function TeamUser() {
         const data = await res.json();
 
         // Filter users into reviewers and admins and add is_active property
-        setReviewerUsers(data.filter(user => user.role === "reviewer").map(user => ({ ...user, is_active: user.is_active !== undefined ? user.is_active : true })));
-        setAdminUsers(data.filter(user => user.role === "admin").map(user => ({ ...user, is_active: user.is_active !== undefined ? user.is_active : true })));
-
+        setReviewerUsers(
+          data
+            .filter((user) => user.role === "reviewer")
+            .map((user) => ({
+              ...user,
+              is_active: user.is_active !== undefined ? user.is_active : true,
+            }))
+        );
+        setAdminUsers(
+          data
+            .filter((user) => user.role === "admin")
+            .map((user) => ({
+              ...user,
+              is_active: user.is_active !== undefined ? user.is_active : true,
+            }))
+        );
       } catch (err) {
         setReviewerUsers([]);
         setAdminUsers([]);
@@ -101,7 +114,7 @@ export default function TeamUser() {
           username: name,
           email,
           password,
-          mode:"add",
+          mode: "add",
           role: activeTab === "reviewers" ? "reviewer" : "admin", // Dynamically set role
         }),
       });
@@ -110,7 +123,13 @@ export default function TeamUser() {
         throw new Error(data.detail || "Registration failed");
       }
       // Update the correct user list based on the role
-      const newUser = { username: name, email, role: activeTab === "reviewers" ? "reviewer" : "admin", password, is_active: true };
+      const newUser = {
+        username: name,
+        email,
+        role: activeTab === "reviewers" ? "reviewer" : "admin",
+        password,
+        is_active: true,
+      };
       if (newUser.role === "reviewer") {
         setReviewerUsers((prev) => [...prev, newUser]);
       } else if (newUser.role === "admin") {
@@ -145,7 +164,10 @@ export default function TeamUser() {
       const response = await fetch(`${API_BASE_URL}/delete-reviewer_user`, {
         method: "DELETE",
         headers,
-        body: JSON.stringify({ user_id: userToDelete.user_id, role: userToDelete.role }),
+        body: JSON.stringify({
+          user_id: userToDelete.user_id,
+          role: userToDelete.role,
+        }),
       });
 
       if (!response.ok) {
@@ -269,7 +291,9 @@ export default function TeamUser() {
               <div className="flex items-center gap-4">
                 <input
                   type="text"
-                placeholder={`Search ${activeTab === "reviewers" ? "Reviewers" : "Admins"} by name...`}
+                  placeholder={`Search ${
+                    activeTab === "reviewers" ? "Reviewers" : "Admins"
+                  } by name...`}
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
@@ -285,7 +309,7 @@ export default function TeamUser() {
                   className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
                   onClick={openModal}
                 >
-                  <span style={{filter: 'brightness(3.5)'}}>➕</span>
+                  <span style={{ filter: "brightness(3.5)" }}>➕</span>
                   {activeTab === "reviewers" ? "Add Reviewer" : "Add Admin"}
                 </button>
               </div>
@@ -450,7 +474,8 @@ export default function TeamUser() {
                       )}
                     </tr>
                   ))}
-                  {filteredUsers.length === 0 && ( /* Also ensure no content is shown if the user is loading or an error */
+                  {filteredUsers.length ===
+                    0 /* Also ensure no content is shown if the user is loading or an error */ && (
                     <tr>
                       <td
                         colSpan={activeTab === "reviewers" ? 4 : 3}
@@ -559,7 +584,9 @@ export default function TeamUser() {
                     isDarkMode ? "text-gray-400" : "text-gray-600"
                   }`}
                 >
-                  {activeTab === "reviewers" ? "Invite a new reviewer to your team" : "Invite a new admin to your team"}
+                  {activeTab === "reviewers"
+                    ? "Invite a new reviewer to your team"
+                    : "Invite a new admin to your team"}
                 </p>
               </div>
 
@@ -608,7 +635,7 @@ export default function TeamUser() {
                   />
                 </div>
 
-                <div>
+                {/* <div>
                   <label
                     className={`block text-sm font-medium mb-2 transition-colors ${
                       isDarkMode ? "text-gray-300" : "text-gray-700"
@@ -647,7 +674,7 @@ export default function TeamUser() {
                   >
                     User can change this password after first login
                   </p>
-                </div>
+                </div> */}
 
                 {modalMessage && (
                   <div
@@ -671,8 +698,10 @@ export default function TeamUser() {
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                       Adding reviewer...
                     </div>
+                  ) : activeTab === "reviewers" ? (
+                    "Add Reviewer"
                   ) : (
-                    activeTab === "reviewers" ? "Add Reviewer" : "Add Admin"
+                    "Add Admin"
                   )}
                 </button>
               </form>

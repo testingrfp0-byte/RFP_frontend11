@@ -37,7 +37,7 @@ export default function RegisterVerified() {
           old_password: password,
           new_password: newPassword,
           role: prefilledRole,
-          username, 
+          username,
         }),
       });
 
@@ -85,7 +85,6 @@ export default function RegisterVerified() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-
           <div>
             <label
               className={`block text-sm font-medium mb-2 transition-colors ${
@@ -128,7 +127,7 @@ export default function RegisterVerified() {
             />
           </div>
 
-          <div>
+          {/* <div>
             <label
               className={`block text-sm font-medium mb-2 transition-colors ${
                 isDarkMode ? "text-gray-300" : "text-gray-700"
@@ -148,7 +147,7 @@ export default function RegisterVerified() {
               }`}
               required
             />
-          </div>
+          </div> */}
 
           <div>
             <label

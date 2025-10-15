@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 export const VerifyEmail = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [status, setStatus] = useState("loading"); 
+  const [status, setStatus] = useState("loading");
 
   const queryParams = new URLSearchParams(location.search);
   const otp = queryParams.get("otp");
@@ -16,19 +17,16 @@ export const VerifyEmail = () => {
   useEffect(() => {
     const verify = async () => {
       try {
-       const response = await axios.get(
-          "https://3348b4efb3ca.ngrok-free.app/verify-email",
-          {
-            params: { otp, email, role },
-            headers: {
-              "ngrok-skip-browser-warning": "true",
-            },
-             }
-        );
-        if (response.status === 200 ||response.status === 201) {
+        const response = await axios.get(API_BASE_URL + "/verify-email", {
+          params: { otp, email, role },
+          headers: {
+            "ngrok-skip-browser-warning": "true",
+          },
+        });
+        if (response.status === 200 || response.status === 201) {
           setStatus("success");
-            navigate("/register-verified", { state: { email, password ,role } });
-        } 
+          navigate("/register-verified", { state: { email, password, role } });
+        }
       } catch (err) {
         setStatus("error");
       }

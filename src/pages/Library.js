@@ -11,16 +11,14 @@ const NGROK_HEADERS = {
 };
 
 export default function Library({ setPdfList }) {
-
   const { isDarkMode } = useTheme();
   const [activeTab, setActiveTab] = useState("upload");
   const [historicRFPs, setHistoricRFPs] = useState([]);
   const [trainingMaterials, setTrainingMaterials] = useState([]);
   const [learningDocuments, setLearningDocuments] = useState([]);
   const [clean, setClean] = useState([]);
-  console.log(clean, "clean");
-const [project_name, setProjectName] = useState("");
- 
+  const [project_name, setProjectName] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState([]);
   const [uploadProgress, setUploadProgress] = useState({});
@@ -72,7 +70,6 @@ const [project_name, setProjectName] = useState("");
       });
       if (historicResponse.ok) {
         const data = await historicResponse.json();
-        console.log(data, "data");
 
         setHistoricRFPs(data.filter((doc) => doc.category === "history") || []);
         setClean(data.filter((doc) => doc.category === "clean") || []);
@@ -195,13 +192,13 @@ const [project_name, setProjectName] = useState("");
   const handleDragOver = (e, category) => {
     e.preventDefault();
     e.stopPropagation();
-    setDragOver(prev => ({ ...prev, [category]: true }));
+    setDragOver((prev) => ({ ...prev, [category]: true }));
   };
 
   const handleDragEnter = (e, category) => {
     e.preventDefault();
     e.stopPropagation();
-    setDragOver(prev => ({ ...prev, [category]: true }));
+    setDragOver((prev) => ({ ...prev, [category]: true }));
   };
 
   const handleDragLeave = (e, category) => {
@@ -209,53 +206,58 @@ const [project_name, setProjectName] = useState("");
     e.stopPropagation();
     // Only set to false if we're leaving the actual drop zone, not a child element
     if (e.currentTarget.contains(e.relatedTarget)) return;
-    setDragOver(prev => ({ ...prev, [category]: false }));
+    setDragOver((prev) => ({ ...prev, [category]: false }));
   };
 
   // Handle file drop
   const handleDrop = (e, category) => {
     e.preventDefault();
     e.stopPropagation();
-    setDragOver(prev => ({ ...prev, [category]: false }));
+    setDragOver((prev) => ({ ...prev, [category]: false }));
 
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
-      handleFiles(files, category);
+      handleFiles(files, category, project_name);
     }
   };
 
   // Handle file selection (from input or drop)
-const handleFiles = (files, category, project_name) => {
-  if (!files || files.length === 0) return;
+  const handleFiles = (files, category, project_name) => {
+    console.log("object", files.length, !files, project_name);
+    if (!files || files.length === 0) return;
 
-  if (!project_name?.trim()) {
-    return;
-  }
+    if (!project_name?.trim()) {
+      return;
+    }
 
-  // Add files to uploading state
-  const newUploadingFiles = Array.from(files).map((file) => ({
-    name: file.name,
-    category,
-    progress: 0,
-  }));
+    console.log("files.length", files.length);
+    // Add files to uploading state
+    const newUploadingFiles = Array.from(files).map((file) => ({
+      name: file.name,
+      category,
+      progress: 0,
+    }));
+    console.log("setUploadingFiles", files.length);
+    setUploadingFiles((prev) => [...prev, ...newUploadingFiles]);
 
-  setUploadingFiles((prev) => [...prev, ...newUploadingFiles]);
+    console.log("files.", files.length);
 
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i];
-    uploadSingleFile(file, category, project_name); 
-  }
-};
-
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      console.log("files.length", files.length);
+      console.log("file", file);
+      uploadSingleFile(file, category, project_name);
+    }
+  };
 
   const handleFileUpload = (event, category) => {
+    console.log("handleFileUpload");
     const files = event.target.files;
-    handleFiles(files, category,project_name);
+    handleFiles(files, category, project_name);
     event.target.value = "";
   };
 
   const uploadSingleFile = async (file, category) => {
-
     setUploadProgress((prev) => ({
       ...prev,
       [file.name]: 0,
@@ -265,7 +267,7 @@ const handleFiles = (files, category, project_name) => {
       const formData = new FormData();
       formData.append("files", file);
       formData.append("category", category);
-      formData.append("project_name", project_name); 
+      formData.append("project_name", project_name);
 
       const session = localStorage.getItem("session");
       const token = session ? JSON.parse(session).token : null;
@@ -294,7 +296,7 @@ const handleFiles = (files, category, project_name) => {
 
       const result = await response.json();
       console.log("Upload successful:", result);
-      setProjectName("")
+      setProjectName("");
       //  window.location.reload()
       clearInterval(progressInterval);
       setUploadProgress((prev) => ({
@@ -314,8 +316,7 @@ const handleFiles = (files, category, project_name) => {
 
       if (category === "clean") {
         setClean((prev) => [newDocument, ...prev]);
-      }
-      else if (category === "training") {
+      } else if (category === "training") {
         setTrainingMaterials((prev) => [newDocument, ...prev]);
       } else if (category === "learning") {
         setLearningDocuments((prev) => [newDocument, ...prev]);
@@ -350,7 +351,6 @@ const handleFiles = (files, category, project_name) => {
       label: "Upload a new RFP",
       icon: "📤",
       count: historicRFPs.length,
-
     },
     {
       id: "historic",
@@ -376,9 +376,10 @@ const handleFiles = (files, category, project_name) => {
     <div
       key={doc.id}
       className={`rounded-lg p-3 transition-all hover:shadow-lg flex flex-col justify-between cursor-pointer
-        ${isDarkMode
-          ? "bg-gray-700 border border-gray-600 hover:bg-gray-650"
-          : "bg-gray-50 border border-gray-200 hover:bg-gray-100"
+        ${
+          isDarkMode
+            ? "bg-gray-700 border border-gray-600 hover:bg-gray-650"
+            : "bg-gray-50 border border-gray-200 hover:bg-gray-100"
         }`}
     >
       <div className="flex items-start justify-between gap-2 flex-wrap">
@@ -408,8 +409,9 @@ const handleFiles = (files, category, project_name) => {
               </span>
               {doc.size && (
                 <span
-                  className={`${isDarkMode ? "text-gray-400" : "text-gray-500"
-                    }`}
+                  className={`${
+                    isDarkMode ? "text-gray-400" : "text-gray-500"
+                  }`}
                 >
                   {doc.size}
                 </span>
@@ -459,94 +461,114 @@ const handleFiles = (files, category, project_name) => {
     const isDragActive = dragOver[category] || false;
 
     return (
-      <><div className="mb-4">
-  <input
-    type="text"
-    placeholder="Enter project name"
-    value={project_name}
-    onChange={(e) => setProjectName(e.target.value)}
-    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-  />
-</div>
+      <>
+        <div className="mb-4">
+          <input
+            type="text"
+            placeholder="Enter project name"
+            value={project_name}
+            onChange={(e) => setProjectName(e.target.value)}
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2
+        ${
+          !project_name.trim()
+            ? "border-red-500 focus:ring-red-500"
+            : "border-gray-300 focus:ring-purple-500"
+        }`}
+          />
+          {/* Optional inline error message */}
+          {!project_name.trim() && (
+            <p className="text-red-500 text-sm mt-1">
+              Project name is required
+            </p>
+          )}
+        </div>
 
-      <div
-        className={`rounded-lg p-4 mb-5 border-2 border-dashed transition-colors ${isDragActive
-            ? "border-purple-500 bg-purple-500/10"
-            : isDarkMode
+        <div
+          onDragOver={(e) => handleDragOver(e, category)}
+          onDragEnter={(e) => handleDragEnter(e, category)}
+          onDragLeave={(e) => handleDragLeave(e, category)}
+          onDrop={(e) => handleDrop(e, category)}
+          className={`rounded-lg p-4 mb-5 border-2 border-dashed transition-colors ${
+            isDragActive
+              ? "border-purple-500 bg-purple-500/10"
+              : isDarkMode
               ? "border-gray-600 bg-gray-800/50"
               : "border-gray-300 bg-gray-50/50"
           } ${isDisabled ? "cursor-not-allowed opacity-50" : ""}`}
-        onDragOver={(e) => handleDragOver(e, category)}
-        onDragEnter={(e) => handleDragEnter(e, category)}
-        onDragLeave={(e) => handleDragLeave(e, category)}
-        onDrop={(e) => handleDrop(e, category)}
-      >
-        <div className="text-center">
-          <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center mx-auto mb-3">
-            <span className="text-purple-400 text-2xl">📤</span>
-          </div>
-          <h3
-            className={`font-semibold mb-2 ${isDarkMode ? "text-white" : "text-gray-900"
+        >
+          <div className="text-center">
+            <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+              <span className="text-purple-400 text-2xl">📤</span>
+            </div>
+            <h3
+              className={`font-semibold mb-2 ${
+                isDarkMode ? "text-white" : "text-gray-900"
               }`}
-          >
-            Upload {title}
-          </h3>
-          <p
-            className={`text-sm mb-4 ${isDarkMode ? "text-gray-400" : "text-gray-600"
+            >
+              Upload {title}
+            </h3>
+            <p
+              className={`text-sm mb-4 ${
+                isDarkMode ? "text-gray-400" : "text-gray-600"
               }`}
-          >
-            {isDragActive ? "Drop files here" : "Drag and drop files here or click to browse"}
-          </p>
-          <input
-            type="file"
-            id={`upload-${category}`}
-            className="hidden"
-            accept=".pdf,.doc,.docx,.txt,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,.ppt,.pptx"
-            onChange={(e) => handleFileUpload(e, category)}
-            disabled={isDisabled}
-            multiple // Enable multiple file selection
-            ref={
-              category === "clean" ?
-                cleanFileInputRef
-                :
-                category === "training"
+            >
+              {isDragActive
+                ? "Drop files here"
+                : "Drag and drop files here or click to browse"}
+            </p>
+            <input
+              type="file"
+              id={`upload-${category}`}
+              className="hidden"
+              accept=".pdf,.doc,.docx,.txt,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,.ppt,.pptx"
+              onChange={(e) => handleFileUpload(e, category)}
+              disabled={isDisabled}
+              multiple
+              ref={
+                category === "clean"
+                  ? cleanFileInputRef
+                  : category === "training"
                   ? trainingFileInputRef
                   : category === "learning"
-                    ? learningFileInputRef
-                    : historicFileInputRef
-            }
-          />
-          <label
-            htmlFor={`upload-${category}`}
-            className={`bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer inline-block ${isDisabled ? "cursor-not-allowed" : ""
+                  ? learningFileInputRef
+                  : historicFileInputRef
+              }
+            />
+            <label
+              htmlFor={`upload-${category}`}
+              className={`bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer inline-block ${
+                isDisabled ? "cursor-not-allowed" : ""
               }`}
-          >
-            Choose Files
-          </label>
+            >
+              Choose Files
+            </label>
+          </div>
         </div>
-      </div>
       </>
     );
   };
 
   return (
     <div
-      className={`p-4 transition-colors ${isDarkMode ? "bg-gray-900" : "bg-gray-50"
-        }`}
+      className={`p-4 transition-colors ${
+        isDarkMode ? "bg-gray-900" : "bg-gray-50"
+      }`}
     >
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1
-            className={`text-3xl font-bold mb-2 flex items-center gap-3 transition-colors ${isDarkMode ? "text-white" : "text-gray-900"
-              }`}
+            className={`text-3xl font-bold mb-2 flex items-center gap-3 transition-colors ${
+              isDarkMode ? "text-white" : "text-gray-900"
+            }`}
           >
             <span className="text-4xl">📚</span>
             Upload Center and Library
           </h1>
           <p
-            className={`transition-colors ${isDarkMode ? "text-gray-400" : "text-gray-600"
-              }`}
+            className={`transition-colors ${
+              isDarkMode ? "text-gray-400" : "text-gray-600"
+            }`}
           >
             Access historic RFP responses, training materials, and learning
             documents
@@ -556,14 +578,16 @@ const handleFiles = (files, category, project_name) => {
         {/* Upload Progress */}
         {uploadingFiles.length > 0 && (
           <div
-            className={`mb-6 p-4 rounded-lg transition-colors ${isDarkMode
+            className={`mb-6 p-4 rounded-lg transition-colors ${
+              isDarkMode
                 ? "bg-gray-800 border border-gray-700"
                 : "bg-white border border-gray-200"
-              }`}
+            }`}
           >
             <h3
-              className={`font-medium mb-3 ${isDarkMode ? "text-white" : "text-gray-900"
-                }`}
+              className={`font-medium mb-3 ${
+                isDarkMode ? "text-white" : "text-gray-900"
+              }`}
             >
               Uploading Files
             </h3>
@@ -573,8 +597,9 @@ const handleFiles = (files, category, project_name) => {
                 <div className="flex items-center gap-3 mb-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-500"></div>
                   <span
-                    className={`text-sm font-medium ${isDarkMode ? "text-white" : "text-gray-900"
-                      }`}
+                    className={`text-sm font-medium ${
+                      isDarkMode ? "text-white" : "text-gray-900"
+                    }`}
                   >
                     {file.name}
                   </span>
@@ -596,32 +621,35 @@ const handleFiles = (files, category, project_name) => {
         {/* Tabs */}
         <div className="mb-6">
           <div
-            className={`flex space-x-1 p-1 rounded-lg ${isDarkMode
+            className={`flex space-x-1 p-1 rounded-lg ${
+              isDarkMode
                 ? "bg-gray-200 dark:bg-gray-700 border border-gray-700"
                 : "bg-white border border-gray-200"
-              }`}
+            }`}
           >
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === tab.id
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  activeTab === tab.id
                     ? "bg-gray-800 dark:bg-white dark:text-gray-800 text-white shadow-sm"
                     : isDarkMode
-                      ? "text-gray-800 hover:text-white hover:bg-gray-800"
-                      : "text-gray-800 hover:text-white hover:bg-gray-800"
-                  }`}
+                    ? "text-gray-800 hover:text-white hover:bg-gray-800"
+                    : "text-gray-800 hover:text-white hover:bg-gray-800"
+                }`}
               >
                 <span>{tab.icon}</span>
                 {tab.label}
                 {tab.count > 0 && (
                   <span
-                    className={`px-2 py-0.5 rounded-full text-xs ${activeTab === tab.id
+                    className={`px-2 py-0.5 rounded-full text-xs ${
+                      activeTab === tab.id
                         ? "bg-purple-100 text-purple-600"
                         : isDarkMode
-                          ? "bg-gray-600 text-gray-300"
-                          : "bg-gray-300 text-gray-600"
-                      }`}
+                        ? "bg-gray-600 text-gray-300"
+                        : "bg-gray-300 text-gray-600"
+                    }`}
                   >
                     {tab.count}
                   </span>
@@ -633,17 +661,19 @@ const handleFiles = (files, category, project_name) => {
 
         {/* Content */}
         <div
-          className={`rounded-xl shadow-xl p-6 transition-colors ${isDarkMode
+          className={`rounded-xl shadow-xl p-6 transition-colors ${
+            isDarkMode
               ? "bg-gray-800 border border-gray-700"
               : "bg-white border border-gray-200"
-            }`}
+          }`}
         >
           {loading ? (
             <div className="flex justify-center items-center py-12">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-500"></div>
               <span
-                className={`ml-3 transition-colors ${isDarkMode ? "text-gray-300" : "text-gray-600"
-                  }`}
+                className={`ml-3 transition-colors ${
+                  isDarkMode ? "text-gray-300" : "text-gray-600"
+                }`}
               >
                 Loading library...
               </span>
@@ -653,13 +683,15 @@ const handleFiles = (files, category, project_name) => {
               {/* Delete Message and Confirmation Dialog */}
               {deleteMessage && (
                 <div
-                  className={`mb-4 p-3 rounded-lg text-sm ${deleteMessage.includes("Error")
+                  className={`mb-4 p-3 rounded-lg text-sm ${
+                    deleteMessage.includes("Error")
                       ? "bg-red-100 text-red-700"
                       : "bg-green-100 text-green-700"
-                    } ${isDarkMode
+                  } ${
+                    isDarkMode
                       ? "border border-gray-600"
                       : "border border-gray-200"
-                    }`}
+                  }`}
                 >
                   {deleteMessage}
                 </div>
@@ -678,8 +710,9 @@ const handleFiles = (files, category, project_name) => {
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-2 h-8 bg-purple-500 rounded-full"></div>
                     <h2
-                      className={`text-xl font-semibold transition-colors ${isDarkMode ? "text-white" : "text-gray-900"
-                        }`}
+                      className={`text-xl font-semibold transition-colors ${
+                        isDarkMode ? "text-white" : "text-gray-900"
+                      }`}
                     >
                       Upload New RFP Documents
                     </h2>
@@ -712,8 +745,9 @@ const handleFiles = (files, category, project_name) => {
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-2 h-8 bg-purple-500 rounded-full"></div>
                     <h2
-                      className={`text-xl font-semibold transition-colors ${isDarkMode ? "text-white" : "text-gray-900"
-                        }`}
+                      className={`text-xl font-semibold transition-colors ${
+                        isDarkMode ? "text-white" : "text-gray-900"
+                      }`}
                     >
                       Historic RFP Responses
                     </h2>
@@ -727,19 +761,22 @@ const handleFiles = (files, category, project_name) => {
                   ) : (
                     <div className="text-center py-12">
                       <div
-                        className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors ${isDarkMode ? "bg-gray-700" : "bg-gray-200"
-                          }`}
+                        className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors ${
+                          isDarkMode ? "bg-gray-700" : "bg-gray-200"
+                        }`}
                       >
                         <span
-                          className={`text-2xl transition-colors ${isDarkMode ? "text-gray-500" : "text-gray-400"
-                            }`}
+                          className={`text-2xl transition-colors ${
+                            isDarkMode ? "text-gray-500" : "text-gray-400"
+                          }`}
                         >
                           📋
                         </span>
                       </div>
                       <p
-                        className={`text-lg transition-colors ${isDarkMode ? "text-gray-400" : "text-gray-600"
-                          }`}
+                        className={`text-lg transition-colors ${
+                          isDarkMode ? "text-gray-400" : "text-gray-600"
+                        }`}
                       >
                         No historic RFPs available
                       </p>
@@ -754,8 +791,9 @@ const handleFiles = (files, category, project_name) => {
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-2 h-8 bg-purple-500 rounded-full"></div>
                     <h2
-                      className={`text-xl font-semibold transition-colors ${isDarkMode ? "text-white" : "text-gray-900"
-                        }`}
+                      className={`text-xl font-semibold transition-colors ${
+                        isDarkMode ? "text-white" : "text-gray-900"
+                      }`}
                     >
                       Background Training Materials
                     </h2>
@@ -779,8 +817,9 @@ const handleFiles = (files, category, project_name) => {
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-2 h-8 bg-purple-500 rounded-full"></div>
                     <h2
-                      className={`text-xl font-semibold transition-colors ${isDarkMode ? "text-white" : "text-gray-900"
-                        }`}
+                      className={`text-xl font-semibold transition-colors ${
+                        isDarkMode ? "text-white" : "text-gray-900"
+                      }`}
                     >
                       Uploaded Learning Documents
                     </h2>

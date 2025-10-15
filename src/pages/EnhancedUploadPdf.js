@@ -113,7 +113,7 @@ export default function EnhancedUploadPdf({ setPdfList }) {
     });
   };
   const clearAllFiles = () => {
-     setMessage("");
+    setMessage("");
     setFiles([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -121,10 +121,9 @@ export default function EnhancedUploadPdf({ setPdfList }) {
   };
 
   const handleUpload = async () => {
-
-      if (!projectName || !projectName.trim()) {
-    return setMessage("Project name is required.");
-  }
+    if (!projectName || !projectName.trim()) {
+      return setMessage("Project name is required.");
+    }
 
     if (files.length === 0)
       return setMessage("Please select at least one file.");
@@ -146,8 +145,8 @@ export default function EnhancedUploadPdf({ setPdfList }) {
       for (const file of files) {
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("project_name",projectName);
-         formData.append("category", "UploadCenter");
+        formData.append("project_name", projectName);
+        formData.append("category", "UploadCenter");
         const headers = {
           ...(token && { Authorization: `Bearer ${token}` }),
         };
@@ -204,11 +203,11 @@ export default function EnhancedUploadPdf({ setPdfList }) {
       }
 
       // Refresh the PDF list after all uploads
-   
+
       if (!hasDuplicates) {
         fetchPdfList();
         clearAllFiles();
-      } 
+      }
     } catch (err) {
       console.error("Upload error:", err);
       setMessage("Upload failed: " + err.message);
@@ -340,7 +339,7 @@ export default function EnhancedUploadPdf({ setPdfList }) {
       };
     }
   }, [handleDragOver, handleDragEnter, handleDragLeave, handleDrop]);
- 
+
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-6 flex items-start justify-between flex-col">
@@ -449,45 +448,42 @@ export default function EnhancedUploadPdf({ setPdfList }) {
                     </button>
                   </div>
                   <div className="space-y-2 max-h-40 overflow-y-auto">
+                    <input
+                      type="text"
+                      placeholder="Enter project name"
+                      value={projectName}
+                      onChange={(e) => setProjectName(e.target.value)}
+                      required
+                      className="text-sm border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+                    />
 
-    <input
-      type="text"
-      placeholder="Enter project name"
-      value={projectName}
-      onChange={(e) => setProjectName(e.target.value)}
-      required
-  className="text-sm border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
-    />
-
-  
-    {files.map((file, index) => (
-      <div
-        key={index}
-        className="flex justify-between items-center py-2 px-3 text-black rounded-md bg-white dark:bg-gray-700"
-      >
-        <span
-          className={`text-xs truncate max-w-xs ${
-            isDarkMode ? "text-black" : "text-gray-700"
-          }`}
-          title={file.name}
-        >
-          {file.name}
-        </span>
-        <button
-          onClick={() => removeFile(index)}
-          className={`text-lg ${
-            isDarkMode
-              ? "text-red-400 hover:text-red-300"
-              : "text-red-600 hover:text-red-800"
-          } transition-colors`}
-          aria-label="Remove file"
-        >
-          ×
-        </button>
-      </div>
-    ))}
-  </div>
-
+                    {files.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex justify-between items-center py-2 px-3 text-black rounded-md bg-white dark:bg-gray-700"
+                      >
+                        <span
+                          className={`text-xs truncate max-w-xs ${
+                            isDarkMode ? "text-black" : "text-gray-700"
+                          }`}
+                          title={file.name}
+                        >
+                          {file.name}
+                        </span>
+                        <button
+                          onClick={() => removeFile(index)}
+                          className={`text-lg ${
+                            isDarkMode
+                              ? "text-red-400 hover:text-red-300"
+                              : "text-red-600 hover:text-red-800"
+                          } transition-colors`}
+                          aria-label="Remove file"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
 
                   {/* Start Analysis Button - Prominently positioned after file selection */}
                   <div className="mt-4 flex justify-center">
