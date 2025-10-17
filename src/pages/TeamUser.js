@@ -332,7 +332,7 @@ export default function TeamUser() {
                       activeTab === tab.id
                         ? "bg-white dark:bg-gray-800 text-purple-600 shadow-sm"
                         : isDarkMode
-                        ? "text-white hover:text-gray-400"
+                        ? "text-dark hover:text-gray-400"
                         : "text-gray-700 hover:text-gray-400"
                     }`}
                   >

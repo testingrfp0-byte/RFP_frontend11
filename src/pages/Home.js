@@ -2526,7 +2526,7 @@ export default function Home({
                         }}
                       >
                         <div className="flex flex-col items-center text-center">
-                          <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center mb-3 group-hover:bg-purple-500/30 transition-colors">
+                          <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center mb-3 transition-colors">
                             <span className="text-purple-400 text-xl">📄</span>
                           </div>
                           <h3
@@ -2549,612 +2549,630 @@ export default function Home({
                       </div>
                     ))}
                 </div>
-
-                <div className="space-y-3">
-                  {matchedArray
-                    .filter((question) =>
-                      selectedPdf
-                        ? question.rfp_id === selectedPdf.rfp_id
-                        : true
-                    )
-                    .filter((question) => {
-                      if (filterStatus === "all") return true;
-                      if (filterStatus === "submitted")
-                        return question.is_submitted;
-                      if (filterStatus === "not submitted")
-                        return question.submit_status === "not submitted";
-                      if (filterStatus === "process")
-                        return question.submit_status === "process";
-                      return true;
-                    })
-                    .map((question, idx) => (
-                      <div
-                        key={question.question_id}
-                        className={`rounded-lg overflow-hidden transition-colors ${
-                          isDarkMode
-                            ? question.is_submitted
-                              ? "bg-green-900/20 border border-green-700/50"
-                              : "bg-gray-700 border border-gray-600"
-                            : question.is_submitted
-                            ? "bg-green-100/50 border border-green-300"
-                            : "bg-gray-50 border border-gray-200"
-                        }`}
-                      >
+                {selectedPdf !== null && (
+                  <div className="space-y-3">
+                    {matchedArray
+                      .filter((question) =>
+                        selectedPdf
+                          ? question.rfp_id === selectedPdf.rfp_id
+                          : true
+                      )
+                      .filter((question) => {
+                        if (filterStatus === "all") return true;
+                        if (filterStatus === "submitted")
+                          return question.is_submitted;
+                        if (filterStatus === "not submitted")
+                          return question.submit_status === "not submitted";
+                        if (filterStatus === "process")
+                          return question.submit_status === "process";
+                        return true;
+                      })
+                      .map((question, idx) => (
                         <div
-                          className={`flex items-center justify-between p-4 cursor-pointer transition-colors ${
+                          key={question.question_id}
+                          className={`rounded-lg overflow-hidden transition-colors ${
                             isDarkMode
-                              ? "hover:bg-gray-650"
-                              : "hover:bg-gray-100"
+                              ? question.is_submitted
+                                ? "bg-green-900/20 border border-green-700/50"
+                                : "bg-gray-700 border border-gray-600"
+                              : question.is_submitted
+                              ? "bg-green-100/50 border border-green-300"
+                              : "bg-gray-50 border border-gray-200"
                           }`}
-                          onClick={() => {
-                            setExpandedQuestion(
-                              expandedQuestion === idx ? null : idx
-                            );
-                            if (question.is_submitted && question.answer_id) {
-                              handleAnswerResponse(question.question_id);
-                            }
-                          }}
                         >
-                          <div className="flex items-start gap-3 flex-1">
-                            <span className="text-purple-400">
-                              Q {question.question_text.split(" ")[0]}
-                            </span>
-                            <span
-                              className={`font-medium text-sm leading-relaxed transition-colors ${
-                                isDarkMode ? "text-white" : "text-gray-900"
-                              }`}
-                            >
-                              {question.question_text.substring(
-                                question.question_text.indexOf(" ") + 1
-                              )}
-                            </span>
-                          </div>
-                          <span className="text-purple-400 ml-4">
-                            {expandedQuestion === idx ? "▲" : "▼"}
-                          </span>
-                        </div>
-                        {expandedQuestion === idx && (
                           <div
-                            className={`p-4 border-t transition-colors ${
+                            className={`flex items-center justify-between p-4 cursor-pointer transition-colors ${
                               isDarkMode
-                                ? "bg-gray-750 border-gray-600"
-                                : "bg-gray-100 border-gray-200"
+                                ? "hover:bg-gray-650"
+                                : "hover:bg-gray-100"
                             }`}
+                            onClick={() => {
+                              setExpandedQuestion(
+                                expandedQuestion === idx ? null : idx
+                              );
+                              if (question.is_submitted && question.answer_id) {
+                                handleAnswerResponse(question.question_id);
+                              }
+                            }}
                           >
-                            <div className="mb-4">
-                              <label
-                                className={`block text-sm font-medium mb-2 transition-colors ${
-                                  isDarkMode ? "text-gray-300" : "text-gray-700"
+                            <div className="flex items-start gap-3 flex-1">
+                              <span className="text-purple-400">
+                                Q {question.question_text.split(" ")[0]}
+                              </span>
+                              <span
+                                className={`font-medium text-sm leading-relaxed transition-colors ${
+                                  isDarkMode ? "text-white" : "text-gray-900"
                                 }`}
                               >
-                                Your Response:
-                              </label>
-                              <textarea
-                                className={`w-full p-3 rounded-lg transition-colors resize-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 ${
-                                  isDarkMode
-                                    ? "bg-gray-800 border border-gray-600 text-white placeholder-gray-400"
-                                    : "bg-white border border-gray-300 text-gray-900 placeholder-gray-500"
-                                } ${
-                                  !editingAnswer[question.question_id]
-                                    ? "cursor-not-allowed opacity-75"
-                                    : "cursor-text"
-                                }`}
-                                placeholder="Type your detailed answer here..."
-                                rows="8"
-                                value={question.answer || ""}
-                                onChange={(e) =>
-                                  handleAnswerUpdate(
-                                    question.question_id,
-                                    e.target.value
-                                  )
-                                }
-                                disabled={!editingAnswer[question.question_id]}
-                              />
+                                {question.question_text.substring(
+                                  question.question_text.indexOf(" ") + 1
+                                )}
+                              </span>
                             </div>
-                            {showInput[question.question_id] && (
-                              <div className="flex items-center gap-2 mt-2 py-2">
-                                <input
-                                  type="text"
-                                  value={inputValue || ""}
-                                  onChange={(e) => handleInputChange(e)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter" && !e.shiftKey) {
-                                      e.preventDefault();
-                                      handlePromptSubmit(question);
-                                    }
-                                  }}
-                                  className="border border-gray-300 px-3 py-2 rounded-md w-full"
-                                  placeholder="Type Your Prompt..."
-                                />
-                                <button
-                                  onClick={() => handlePromptSubmit(question)}
-                                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md flex items-center justify-center"
+                            <span className="text-purple-400 ml-4">
+                              {expandedQuestion === idx ? "▲" : "▼"}
+                            </span>
+                          </div>
+                          {expandedQuestion === idx && (
+                            <div
+                              className={`p-4 border-t transition-colors ${
+                                isDarkMode
+                                  ? "bg-gray-750 border-gray-600"
+                                  : "bg-gray-100 border-gray-200"
+                              }`}
+                            >
+                              <div className="mb-4">
+                                <label
+                                  className={`block text-sm font-medium mb-2 transition-colors ${
+                                    isDarkMode
+                                      ? "text-gray-300"
+                                      : "text-gray-700"
+                                  }`}
                                 >
-                                  {loadingsend[question.question_id] ? (
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                  ) : (
-                                    <Send size={16} />
-                                  )}
-                                </button>
+                                  Your Response:
+                                </label>
+                                <textarea
+                                  className={`w-full p-3 rounded-lg transition-colors resize-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 ${
+                                    isDarkMode
+                                      ? "bg-gray-800 border border-gray-600 text-white placeholder-gray-400"
+                                      : "bg-white border border-gray-300 text-gray-900 placeholder-gray-500"
+                                  } ${
+                                    !editingAnswer[question.question_id]
+                                      ? "cursor-not-allowed opacity-75"
+                                      : "cursor-text"
+                                  }`}
+                                  placeholder="Type your detailed answer here..."
+                                  rows="8"
+                                  value={question.answer || ""}
+                                  onChange={(e) =>
+                                    handleAnswerUpdate(
+                                      question.question_id,
+                                      e.target.value
+                                    )
+                                  }
+                                  disabled={
+                                    !editingAnswer[question.question_id]
+                                  }
+                                />
                               </div>
-                            )}
-                            {submissionError[question.question_id] && (
-                              <div className="mb-4 text-red-500 text-sm">
-                                {submissionError[question.question_id]}
-                              </div>
-                            )}
-                            <div>
-                              <div className="flex items-center gap-3 flex-wrap">
-                                {submissionStatus[question.question_id] &&
-                                  !editingAnswer[question.question_id] && (
-                                    <div
-                                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                        submissionStatus[
+                              {showInput[question.question_id] && (
+                                <div className="flex items-center gap-2 mt-2 py-2">
+                                  <input
+                                    type="text"
+                                    value={inputValue || ""}
+                                    onChange={(e) => handleInputChange(e)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter" && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handlePromptSubmit(question);
+                                      }
+                                    }}
+                                    className="border border-gray-300 px-3 py-2 rounded-md w-full"
+                                    placeholder="Type Your Prompt..."
+                                  />
+                                  <button
+                                    onClick={() => handlePromptSubmit(question)}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md flex items-center justify-center"
+                                  >
+                                    {loadingsend[question.question_id] ? (
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                    ) : (
+                                      <Send size={16} />
+                                    )}
+                                  </button>
+                                </div>
+                              )}
+                              {submissionError[question.question_id] && (
+                                <div className="mb-4 text-red-500 text-sm">
+                                  {submissionError[question.question_id]}
+                                </div>
+                              )}
+                              <div>
+                                <div className="flex items-center gap-3 flex-wrap">
+                                  {submissionStatus[question.question_id] &&
+                                    !editingAnswer[question.question_id] && (
+                                      <div
+                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                                          submissionStatus[
+                                            question.question_id
+                                          ] === "submitted"
+                                            ? "bg-gray-400 cursor-not-allowed opacity-50"
+                                            : submissionStatus[
+                                                question.question_id
+                                              ] === "saved"
+                                            ? "bg-gray-400 cursor-not-allowed opacity-50"
+                                            : "bg-blue-600 hover:bg-blue-700 text-white"
+                                        }`}
+                                      >
+                                        {submissionStatus[
                                           question.question_id
                                         ] === "submitted"
-                                          ? "bg-gray-400 cursor-not-allowed opacity-50"
+                                          ? "✅ Answer Submitted"
                                           : submissionStatus[
                                               question.question_id
                                             ] === "saved"
-                                          ? "bg-gray-400 cursor-not-allowed opacity-50"
-                                          : "bg-blue-600 hover:bg-blue-700 text-white"
-                                      }`}
-                                    >
-                                      {submissionStatus[
-                                        question.question_id
-                                      ] === "submitted"
-                                        ? "✅ Answer Submitted"
-                                        : submissionStatus[
-                                            question.question_id
-                                          ] === "saved"
-                                        ? "💾 Answer Saved"
-                                        : "❌ Submitted as Not for Me"}
-                                    </div>
-                                  )}
-                                {submissionStatus[question.question_id] ===
-                                  "submitted" && (
-                                  <button
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                      editingAnswer[question.question_id]
-                                        ? "bg-orange-600 hover:bg-orange-700 text-white"
-                                        : "bg-orange-600 hover:bg-orange-700 text-white"
-                                    }`}
-                                    onClick={() => {
-                                      setEditingAnswer((prev) => ({
-                                        ...prev,
-                                        [question.question_id]: true,
-                                      }));
-                                    }}
-                                    type="button"
-                                    title="Continue editing your answer"
-                                  >
-                                    <span>✏️</span>
-                                    Continue Editing
-                                  </button>
-                                )}
-                                {editingAnswer[question.question_id] &&
-                                  submissionStatus[question.question_id] ===
+                                          ? "💾 Answer Saved"
+                                          : "❌ Submitted as Not for Me"}
+                                      </div>
+                                    )}
+                                  {submissionStatus[question.question_id] ===
                                     "submitted" && (
                                     <button
-                                      className="px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                                        editingAnswer[question.question_id]
+                                          ? "bg-orange-600 hover:bg-orange-700 text-white"
+                                          : "bg-orange-600 hover:bg-orange-700 text-white"
+                                      }`}
                                       onClick={() => {
-                                        handleUpdateSubmit(
-                                          question.question_id,
-                                          question.answer
-                                        );
                                         setEditingAnswer((prev) => ({
                                           ...prev,
-                                          [question.question_id]: false,
+                                          [question.question_id]: true,
                                         }));
                                       }}
                                       type="button"
-                                      title="Submit your answer"
-                                    >
-                                      <span>✅</span>
-                                      Submit
-                                    </button>
-                                  )}
-                                {(!submissionStatus[question.question_id] ||
-                                  submissionStatus[question.question_id] ===
-                                    "saved") &&
-                                  generatedAnswer[question.question_id] && (
-                                    <button
-                                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                        submissionStatus[
-                                          question.question_id
-                                        ] === "submitted"
-                                          ? "bg-gray-400 cursor-not-allowed opacity-50"
-                                          : editingAnswer[question.question_id]
-                                          ? "bg-green-600 hover:bg-green-700 text-white"
-                                          : "bg-orange-600 hover:bg-orange-700 text-white"
-                                      }`}
-                                      onClick={() =>
-                                        submissionStatus[
-                                          question.question_id
-                                        ] !== "submitted" &&
-                                        submissionStatus[
-                                          question.question_id
-                                        ] !== "not submitted" &&
-                                        handleEditAnswer(question.question_id)
-                                      }
-                                      disabled={
-                                        submissionStatus[
-                                          question.question_id
-                                        ] === "submitted" ||
-                                        submissionStatus[
-                                          question.question_id
-                                        ] === "not submitted"
-                                      }
-                                      type="button"
-                                      title={
-                                        submissionStatus[
-                                          question.question_id
-                                        ] === "submitted" ||
-                                        submissionStatus[
-                                          question.question_id
-                                        ] === "not submitted"
-                                          ? "Cannot edit submitted answers"
-                                          : "Edit generated answer"
-                                      }
-                                    >
-                                      <span>
-                                        {editingAnswer[question.question_id]
-                                          ? "💾"
-                                          : "✏️"}
-                                      </span>
-                                      {editingAnswer[question.question_id]
-                                        ? "Save"
-                                        : "Edit Answer"}
-                                    </button>
-                                  )}
-                                {!submissionStatus[question.question_id] && (
-                                  <button
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                      generatingAnswer[question.question_id]
-                                        ? "bg-gray-400 cursor-not-allowed opacity-50"
-                                        : "bg-purple-600 hover:bg-purple-700 text-white"
-                                    }`}
-                                    onClick={() =>
-                                      !submissionStatus[question.question_id] &&
-                                      handleGenerateAnswer(question.question_id)
-                                    }
-                                    disabled={
-                                      !!submissionStatus[
-                                        question.question_id
-                                      ] ||
-                                      generatingAnswer[question.question_id]
-                                    }
-                                    type="button"
-                                  >
-                                    {generatingAnswer[question.question_id] ? (
-                                      <>
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                        Generating...
-                                      </>
-                                    ) : (
-                                      <>
-                                        <span>🤖</span>
-                                        Generate
-                                      </>
-                                    )}
-                                  </button>
-                                )}
-                                {(!submissionStatus[question.question_id] ||
-                                  submissionStatus[question.question_id] ===
-                                    "saved") &&
-                                  generatedAnswer[question.question_id] && (
-                                    <button
-                                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                        submissionStatus[
-                                          question.question_id
-                                        ] === "submitted"
-                                          ? "bg-gray-400 cursor-not-allowed opacity-50"
-                                          : "bg-green-600 hover:bg-green-700 text-white"
-                                      }`}
-                                      type="button"
-                                      title={
-                                        submissionStatus[
-                                          question.question_id
-                                        ] === "submitted"
-                                          ? "Question already submitted"
-                                          : "Submit your answer"
-                                      }
-                                      onClick={() =>
-                                        handleButtonClick(question.question_id)
-                                      }
+                                      title="Continue editing your answer"
                                     >
                                       <span>✏️</span>
-                                      Chat Prompt
+                                      Continue Editing
                                     </button>
                                   )}
-                                {(userRole === "reviewer" || selfAssignMode) &&
-                                  generatedAnswer[question.question_id] &&
-                                  (!submissionStatus[question.question_id] ||
+                                  {editingAnswer[question.question_id] &&
                                     submissionStatus[question.question_id] ===
-                                      "saved") && (
-                                    <div className="relative">
-                                      <div className="flex items-center gap-2">
-                                        <button
-                                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                            loadingVersions[
-                                              question.question_id
-                                            ]
-                                              ? "bg-gray-400 cursor-not-allowed opacity-50"
-                                              : "bg-blue-600 hover:bg-blue-700 text-white"
-                                          }`}
-                                          onClick={() =>
-                                            toggleVersionDropdown(
-                                              question.question_id
-                                            )
-                                          }
-                                          disabled={
-                                            loadingVersions[
-                                              question.question_id
-                                            ]
-                                          }
-                                          type="button"
-                                        >
-                                          {loadingVersions[
-                                            question.question_id
-                                          ] ? (
-                                            <>
-                                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                              Loading...
-                                            </>
-                                          ) : (
-                                            <>
-                                              <span>📝</span>
-                                              Versions
-                                              {responseVersions[
-                                                question.question_id
-                                              ] &&
-                                                responseVersions[
-                                                  question.question_id
-                                                ].length > 0 && (
-                                                  <span className="ml-1 bg-white text-blue-600 px-1.5 py-0.5 rounded-full text-xs">
-                                                    {
-                                                      responseVersions[
-                                                        question.question_id
-                                                      ].length
-                                                    }
-                                                  </span>
-                                                )}
-                                              <span className="ml-2">
-                                                {showVersionDropdown[
-                                                  question.question_id
-                                                ]
-                                                  ? "▲"
-                                                  : "▼"}
-                                              </span>
-                                            </>
-                                          )}
-                                        </button>
-                                        {(!submissionStatus[
-                                          question.question_id
-                                        ] ||
+                                      "submitted" && (
+                                      <button
+                                        className="px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                                        onClick={() => {
+                                          handleUpdateSubmit(
+                                            question.question_id,
+                                            question.answer
+                                          );
+                                          setEditingAnswer((prev) => ({
+                                            ...prev,
+                                            [question.question_id]: false,
+                                          }));
+                                        }}
+                                        type="button"
+                                        title="Submit your answer"
+                                      >
+                                        <span>✅</span>
+                                        Submit
+                                      </button>
+                                    )}
+                                  {(!submissionStatus[question.question_id] ||
+                                    submissionStatus[question.question_id] ===
+                                      "saved") &&
+                                    generatedAnswer[question.question_id] && (
+                                      <button
+                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
                                           submissionStatus[
                                             question.question_id
-                                          ] === "saved") &&
-                                          generatedAnswer[
+                                          ] === "submitted"
+                                            ? "bg-gray-400 cursor-not-allowed opacity-50"
+                                            : editingAnswer[
+                                                question.question_id
+                                              ]
+                                            ? "bg-green-600 hover:bg-green-700 text-white"
+                                            : "bg-orange-600 hover:bg-orange-700 text-white"
+                                        }`}
+                                        onClick={() =>
+                                          submissionStatus[
                                             question.question_id
-                                          ] &&
-                                          question.answer &&
-                                          question.answer.trim() !== "" && (
-                                            <button
-                                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                                submissionStatus[
+                                          ] !== "submitted" &&
+                                          submissionStatus[
+                                            question.question_id
+                                          ] !== "not submitted" &&
+                                          handleEditAnswer(question.question_id)
+                                        }
+                                        disabled={
+                                          submissionStatus[
+                                            question.question_id
+                                          ] === "submitted" ||
+                                          submissionStatus[
+                                            question.question_id
+                                          ] === "not submitted"
+                                        }
+                                        type="button"
+                                        title={
+                                          submissionStatus[
+                                            question.question_id
+                                          ] === "submitted" ||
+                                          submissionStatus[
+                                            question.question_id
+                                          ] === "not submitted"
+                                            ? "Cannot edit submitted answers"
+                                            : "Edit generated answer"
+                                        }
+                                      >
+                                        <span>
+                                          {editingAnswer[question.question_id]
+                                            ? "💾"
+                                            : "✏️"}
+                                        </span>
+                                        {editingAnswer[question.question_id]
+                                          ? "Save"
+                                          : "Edit Answer"}
+                                      </button>
+                                    )}
+                                  {!submissionStatus[question.question_id] && (
+                                    <button
+                                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                                        generatingAnswer[question.question_id]
+                                          ? "bg-gray-400 cursor-not-allowed opacity-50"
+                                          : "bg-purple-600 hover:bg-purple-700 text-white"
+                                      }`}
+                                      onClick={() =>
+                                        !submissionStatus[
+                                          question.question_id
+                                        ] &&
+                                        handleGenerateAnswer(
+                                          question.question_id
+                                        )
+                                      }
+                                      disabled={
+                                        !!submissionStatus[
+                                          question.question_id
+                                        ] ||
+                                        generatingAnswer[question.question_id]
+                                      }
+                                      type="button"
+                                    >
+                                      {generatingAnswer[
+                                        question.question_id
+                                      ] ? (
+                                        <>
+                                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                          Generating...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <span>🤖</span>
+                                          Generate
+                                        </>
+                                      )}
+                                    </button>
+                                  )}
+                                  {(!submissionStatus[question.question_id] ||
+                                    submissionStatus[question.question_id] ===
+                                      "saved") &&
+                                    generatedAnswer[question.question_id] && (
+                                      <button
+                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                                          submissionStatus[
+                                            question.question_id
+                                          ] === "submitted"
+                                            ? "bg-gray-400 cursor-not-allowed opacity-50"
+                                            : "bg-green-600 hover:bg-green-700 text-white"
+                                        }`}
+                                        type="button"
+                                        title={
+                                          submissionStatus[
+                                            question.question_id
+                                          ] === "submitted"
+                                            ? "Question already submitted"
+                                            : "Submit your answer"
+                                        }
+                                        onClick={() =>
+                                          handleButtonClick(
+                                            question.question_id
+                                          )
+                                        }
+                                      >
+                                        <span>✏️</span>
+                                        Chat Prompt
+                                      </button>
+                                    )}
+                                  {(userRole === "reviewer" ||
+                                    selfAssignMode) &&
+                                    generatedAnswer[question.question_id] &&
+                                    (!submissionStatus[question.question_id] ||
+                                      submissionStatus[question.question_id] ===
+                                        "saved") && (
+                                      <div className="relative">
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                                              loadingVersions[
+                                                question.question_id
+                                              ]
+                                                ? "bg-gray-400 cursor-not-allowed opacity-50"
+                                                : "bg-blue-600 hover:bg-blue-700 text-white"
+                                            }`}
+                                            onClick={() =>
+                                              toggleVersionDropdown(
+                                                question.question_id
+                                              )
+                                            }
+                                            disabled={
+                                              loadingVersions[
+                                                question.question_id
+                                              ]
+                                            }
+                                            type="button"
+                                          >
+                                            {loadingVersions[
+                                              question.question_id
+                                            ] ? (
+                                              <>
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                                Loading...
+                                              </>
+                                            ) : (
+                                              <>
+                                                <span>📝</span>
+                                                Versions
+                                                {responseVersions[
                                                   question.question_id
-                                                ] === "submitted"
-                                                  ? "bg-gray-400 cursor-not-allowed opacity-50"
-                                                  : "bg-green-600 hover:bg-green-700 text-white"
+                                                ] &&
+                                                  responseVersions[
+                                                    question.question_id
+                                                  ].length > 0 && (
+                                                    <span className="ml-1 bg-white text-blue-600 px-1.5 py-0.5 rounded-full text-xs">
+                                                      {
+                                                        responseVersions[
+                                                          question.question_id
+                                                        ].length
+                                                      }
+                                                    </span>
+                                                  )}
+                                                <span className="ml-2">
+                                                  {showVersionDropdown[
+                                                    question.question_id
+                                                  ]
+                                                    ? "▲"
+                                                    : "▼"}
+                                                </span>
+                                              </>
+                                            )}
+                                          </button>
+                                          {(!submissionStatus[
+                                            question.question_id
+                                          ] ||
+                                            submissionStatus[
+                                              question.question_id
+                                            ] === "saved") &&
+                                            generatedAnswer[
+                                              question.question_id
+                                            ] &&
+                                            question.answer &&
+                                            question.answer.trim() !== "" && (
+                                              <button
+                                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                                                  submissionStatus[
+                                                    question.question_id
+                                                  ] === "submitted"
+                                                    ? "bg-gray-400 cursor-not-allowed opacity-50"
+                                                    : "bg-green-600 hover:bg-green-700 text-white"
+                                                }`}
+                                                onClick={() =>
+                                                  submissionStatus[
+                                                    question.question_id
+                                                  ] !== "submitted" &&
+                                                  submissionStatus[
+                                                    question.question_id
+                                                  ] !== "not submitted" &&
+                                                  handleSubmit(
+                                                    question.question_id
+                                                  )
+                                                }
+                                                disabled={
+                                                  submissionStatus[
+                                                    question.question_id
+                                                  ] === "submitted" ||
+                                                  submissionStatus[
+                                                    question.question_id
+                                                  ] === "not submitted"
+                                                }
+                                                type="button"
+                                                title={
+                                                  submissionStatus[
+                                                    question.question_id
+                                                  ] === "submitted"
+                                                    ? "Question already submitted"
+                                                    : "Submit your answer"
+                                                }
+                                              >
+                                                <span>✅</span>
+                                                Submit
+                                              </button>
+                                            )}
+                                        </div>
+                                      </div>
+                                    )}
+                                  {(!submissionStatus[question.question_id] ||
+                                    submissionStatus[question.question_id] ===
+                                      "saved") &&
+                                    !generatedAnswer[question.question_id] && (
+                                      <button
+                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white`}
+                                        onClick={() =>
+                                          handleNotForMe(question.question_id)
+                                        }
+                                        disabled={
+                                          submissionStatus[
+                                            question.question_id
+                                          ] === "submitted" ||
+                                          submissionStatus[
+                                            question.question_id
+                                          ] === "not submitted"
+                                        }
+                                        type="button"
+                                        title="Mark as Not for Me"
+                                      >
+                                        <span>❌</span>
+                                        Not for Me
+                                      </button>
+                                    )}
+                                </div>
+                                {showVersionDropdown[question.question_id] &&
+                                  responseVersions[question.question_id] &&
+                                  responseVersions[question.question_id]
+                                    .length > 0 && (
+                                    <div
+                                      className={`mt-2 w-full rounded-lg shadow-lg border transition-all duration-300 ${
+                                        isDarkMode
+                                          ? "bg-gray-800 border-gray-600"
+                                          : "bg-white border-gray-200"
+                                      }`}
+                                    >
+                                      <div
+                                        className={`p-2 border-b ${
+                                          isDarkMode
+                                            ? "border-gray-600"
+                                            : "border-gray-200"
+                                        }`}
+                                      >
+                                        <span
+                                          className={`text-sm font-medium ${
+                                            isDarkMode
+                                              ? "text-gray-300"
+                                              : "text-gray-700"
+                                          }`}
+                                        >
+                                          Generated Responses (
+                                          {
+                                            responseVersions[
+                                              question.question_id
+                                            ].length
+                                          }
+                                          )
+                                        </span>
+                                      </div>
+                                      <div className="max-h-60 overflow-y-auto">
+                                        {responseVersions[
+                                          question.question_id
+                                        ].map((version, versionIdx) => (
+                                          <div
+                                            key={version.id}
+                                            className={`p-3 cursor-pointer transition-colors border-b last:border-b-0 ${
+                                              isDarkMode
+                                                ? "hover:bg-gray-700 border-gray-600"
+                                                : "hover:bg-gray-50 border-gray-200"
+                                            }`}
+                                          >
+                                            <div className="flex items-center justify-between mb-2">
+                                              <span
+                                                className={`text-xs font-medium ${
+                                                  isDarkMode
+                                                    ? "text-gray-400"
+                                                    : "text-gray-500"
+                                                }`}
+                                              >
+                                                Version {versionIdx + 1} (ID:{" "}
+                                                {version.id})
+                                              </span>
+                                              <div className="flex items-center gap-2">
+                                                {version.generated_at && (
+                                                  <span
+                                                    className={`text-xs ${
+                                                      isDarkMode
+                                                        ? "text-gray-500"
+                                                        : "text-gray-400"
+                                                    }`}
+                                                  >
+                                                    {new Date(
+                                                      version.generated_at
+                                                    ).toLocaleString()}
+                                                  </span>
+                                                )}
+                                                <button
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigator.clipboard.writeText(
+                                                      version.answer || ""
+                                                    );
+                                                  }}
+                                                  className={`text-xs px-2 py-1 rounded ${
+                                                    isDarkMode
+                                                      ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                                                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                                  }`}
+                                                >
+                                                  Copy
+                                                </button>
+                                              </div>
+                                            </div>
+
+                                            <p
+                                              className={`text-sm ${
+                                                isDarkMode
+                                                  ? "text-gray-300"
+                                                  : "text-gray-600"
                                               }`}
-                                              onClick={() =>
-                                                submissionStatus[
-                                                  question.question_id
-                                                ] !== "submitted" &&
-                                                submissionStatus[
-                                                  question.question_id
-                                                ] !== "not submitted" &&
-                                                handleSubmit(
-                                                  question.question_id
-                                                )
-                                              }
-                                              disabled={
-                                                submissionStatus[
-                                                  question.question_id
-                                                ] === "submitted" ||
-                                                submissionStatus[
-                                                  question.question_id
-                                                ] === "not submitted"
-                                              }
-                                              type="button"
-                                              title={
-                                                submissionStatus[
-                                                  question.question_id
-                                                ] === "submitted"
-                                                  ? "Question already submitted"
-                                                  : "Submit your answer"
-                                              }
                                             >
-                                              <span>✅</span>
-                                              Submit
-                                            </button>
-                                          )}
+                                              {version.answer ||
+                                                "No content available"}
+                                            </p>
+                                          </div>
+                                        ))}
                                       </div>
                                     </div>
                                   )}
-                                {(!submissionStatus[question.question_id] ||
-                                  submissionStatus[question.question_id] ===
-                                    "saved") &&
-                                  !generatedAnswer[question.question_id] && (
-                                    <button
-                                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white`}
-                                      onClick={() =>
-                                        handleNotForMe(question.question_id)
-                                      }
-                                      disabled={
-                                        submissionStatus[
-                                          question.question_id
-                                        ] === "submitted" ||
-                                        submissionStatus[
-                                          question.question_id
-                                        ] === "not submitted"
-                                      }
-                                      type="button"
-                                      title="Mark as Not for Me"
-                                    >
-                                      <span>❌</span>
-                                      Not for Me
-                                    </button>
-                                  )}
                               </div>
-                              {showVersionDropdown[question.question_id] &&
-                                responseVersions[question.question_id] &&
-                                responseVersions[question.question_id].length >
-                                  0 && (
-                                  <div
-                                    className={`mt-2 w-full rounded-lg shadow-lg border transition-all duration-300 ${
-                                      isDarkMode
-                                        ? "bg-gray-800 border-gray-600"
-                                        : "bg-white border-gray-200"
-                                    }`}
-                                  >
-                                    <div
-                                      className={`p-2 border-b ${
-                                        isDarkMode
-                                          ? "border-gray-600"
-                                          : "border-gray-200"
-                                      }`}
-                                    >
-                                      <span
-                                        className={`text-sm font-medium ${
-                                          isDarkMode
-                                            ? "text-gray-300"
-                                            : "text-gray-700"
-                                        }`}
-                                      >
-                                        Generated Responses (
-                                        {
-                                          responseVersions[question.question_id]
-                                            .length
-                                        }
-                                        )
-                                      </span>
-                                    </div>
-                                    <div className="max-h-60 overflow-y-auto">
-                                      {responseVersions[
-                                        question.question_id
-                                      ].map((version, versionIdx) => (
-                                        <div
-                                          key={version.id}
-                                          className={`p-3 cursor-pointer transition-colors border-b last:border-b-0 ${
-                                            isDarkMode
-                                              ? "hover:bg-gray-700 border-gray-600"
-                                              : "hover:bg-gray-50 border-gray-200"
-                                          }`}
-                                         
-                                        >
-                                          <div className="flex items-center justify-between mb-2">
-                                            <span
-                                              className={`text-xs font-medium ${
-                                                isDarkMode
-                                                  ? "text-gray-400"
-                                                  : "text-gray-500"
-                                              }`}
-                                            >
-                                              Version {versionIdx + 1} (ID:{" "}
-                                              {version.id})
-                                            </span>
-                                            <div className="flex items-center gap-2">
-                                              {version.generated_at && (
-                                                <span
-                                                  className={`text-xs ${
-                                                    isDarkMode
-                                                      ? "text-gray-500"
-                                                      : "text-gray-400"
-                                                  }`}
-                                                >
-                                                  {new Date(
-                                                    version.generated_at
-                                                  ).toLocaleString()}
-                                                </span>
-                                              )}
-                                              <button
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  navigator.clipboard.writeText(
-                                                    version.answer || ""
-                                                  );
-                                                }}
-                                                className={`text-xs px-2 py-1 rounded ${
-                                                  isDarkMode
-                                                    ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                                }`}
-                                              >
-                                                Copy
-                                              </button>
-                                            </div>
-                                          </div>
-
-                                          <p
-                                            className={`text-sm ${
-                                              isDarkMode
-                                                ? "text-gray-300"
-                                                : "text-gray-600"
-                                            }`}
-                                          >
-                                            {version.answer ||
-                                              "No content available"}
-                                          </p>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  {matchedArray.filter((question) =>
-                    selectedPdf ? question.rfp_id === selectedPdf.rfp_id : true
-                  ).length === 0 && (
-                    <div className="text-center py-12">
-                      <div
-                        className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors ${
-                          isDarkMode ? "bg-gray-700" : "bg-gray-200"
-                        }`}
-                      >
-                        <span
-                          className={`text-2xl transition-colors ${
-                            isDarkMode ? "text-gray-500" : "text-gray-400"
+                          )}
+                        </div>
+                      ))}
+                    {matchedArray.filter((question) =>
+                      selectedPdf
+                        ? question.rfp_id === selectedPdf.rfp_id
+                        : true
+                    ).length === 0 && (
+                      <div className="text-center py-12">
+                        <div
+                          className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors ${
+                            isDarkMode ? "bg-gray-700" : "bg-gray-200"
                           }`}
                         >
-                          📝
-                        </span>
+                          <span
+                            className={`text-2xl transition-colors ${
+                              isDarkMode ? "text-gray-500" : "text-gray-400"
+                            }`}
+                          >
+                            📝
+                          </span>
+                        </div>
+                        <p
+                          className={`text-lg transition-colors ${
+                            isDarkMode ? "text-gray-400" : "text-gray-600"
+                          }`}
+                        >
+                          {selectedPdf
+                            ? "No questions assigned for this document"
+                            : "No questions assigned yet"}
+                        </p>
+                        <p
+                          className={`text-sm mt-1 transition-colors ${
+                            isDarkMode ? "text-gray-500" : "text-gray-500"
+                          }`}
+                        >
+                          {selectedPdf
+                            ? "Select another document or check back later"
+                            : "Check back later for new assignments"}
+                        </p>
                       </div>
-                      <p
-                        className={`text-lg transition-colors ${
-                          isDarkMode ? "text-gray-400" : "text-gray-600"
-                        }`}
-                      >
-                        {selectedPdf
-                          ? "No questions assigned for this document"
-                          : "No questions assigned yet"}
-                      </p>
-                      <p
-                        className={`text-sm mt-1 transition-colors ${
-                          isDarkMode ? "text-gray-500" : "text-gray-500"
-                        }`}
-                      >
-                        {selectedPdf
-                          ? "Select another document or check back later"
-                          : "Check back later for new assignments"}
-                      </p>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
               </>
             ) : (
               <div className="text-center py-12">

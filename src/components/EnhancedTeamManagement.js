@@ -7,7 +7,11 @@ const NGROK_HEADERS = {
   "ngrok-skip-browser-warning": "true",
 };
 
-export default function EnhancedTeamManagement({ selectedPdf, pdfDetails, onAssignmentUpdate }) {
+export default function EnhancedTeamManagement({
+  selectedPdf,
+  pdfDetails,
+  onAssignmentUpdate,
+}) {
   const { isDarkMode } = useTheme();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -60,7 +64,7 @@ export default function EnhancedTeamManagement({ selectedPdf, pdfDetails, onAssi
       if (response.ok) {
         const data = await response.json();
         const assignmentMap = {};
-        
+
         data.forEach(({ ques_id, username, user_id }) => {
           if (!assignmentMap[ques_id]) {
             assignmentMap[ques_id] = [];
@@ -100,9 +104,12 @@ export default function EnhancedTeamManagement({ selectedPdf, pdfDetails, onAssi
 
       if (response.ok) {
         // Update local state
-        setAssignedReviewers(prev => ({
+        setAssignedReviewers((prev) => ({
           ...prev,
-          [questionId]: [...(prev[questionId] || []), { username: user.username, user_id: user.user_id }]
+          [questionId]: [
+            ...(prev[questionId] || []),
+            { username: user.username, user_id: user.user_id },
+          ],
         }));
 
         // Notify parent component
@@ -148,9 +155,11 @@ export default function EnhancedTeamManagement({ selectedPdf, pdfDetails, onAssi
 
       if (response.ok) {
         // Update local state
-        setAssignedReviewers(prev => ({
+        setAssignedReviewers((prev) => ({
           ...prev,
-          [questionId]: (prev[questionId] || []).filter(r => r.user_id !== userId)
+          [questionId]: (prev[questionId] || []).filter(
+            (r) => r.user_id !== userId
+          ),
         }));
 
         // Notify parent component
@@ -189,9 +198,11 @@ export default function EnhancedTeamManagement({ selectedPdf, pdfDetails, onAssi
     }
   };
 
-  const reviewers = users.filter(user => user.role?.toLowerCase() === "reviewer");
-  const members = users.filter(user => user.role?.toLowerCase() === "member");
-  const admins = users.filter(user => user.role?.toLowerCase() === "admin");
+  const reviewers = users.filter(
+    (user) => user.role?.toLowerCase() === "reviewer"
+  );
+  const members = users.filter((user) => user.role?.toLowerCase() === "member");
+  const admins = users.filter((user) => user.role?.toLowerCase() === "admin");
 
   if (!selectedPdf || !pdfDetails) {
     return (
@@ -376,7 +387,7 @@ export default function EnhancedTeamManagement({ selectedPdf, pdfDetails, onAssi
               >
                 Question Assignments
               </h3>
-              
+
               <div className="space-y-3">
                 {pdfDetails.questions?.map((question, idx) => (
                   <div
@@ -391,31 +402,26 @@ export default function EnhancedTeamManagement({ selectedPdf, pdfDetails, onAssi
                       className={`p-4 cursor-pointer transition-colors ${
                         isDarkMode ? "hover:bg-gray-650" : "hover:bg-gray-100"
                       }`}
-                      onClick={() => setExpandedQuestion(expandedQuestion === idx ? null : idx)}
+                      onClick={() =>
+                        setExpandedQuestion(
+                          expandedQuestion === idx ? null : idx
+                        )
+                      }
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-start gap-3 flex-1">
                           <span className="text-purple-400">
-                                              Q{" "}
-                                              {
-                                                question.question_text.split(
-                                                  " "
-                                                )[0]
-                                              }
-                                            </span>
-                                            <span
-                                              className={`font-medium text-sm leading-relaxed transition-colors ${
-                                                isDarkMode
-                                                  ? "text-white"
-                                                  : "text-gray-900"
-                                              }`}
-                                            >
-                                              {question.question_text.substring(
-                                                question.question_text.indexOf(
-                                                  " "
-                                                ) + 1
-                                              )}
-                                            </span>
+                            Q {question.question_text.split(" ")[0]}
+                          </span>
+                          <span
+                            className={`font-medium text-sm leading-relaxed transition-colors ${
+                              isDarkMode ? "text-white" : "text-gray-900"
+                            }`}
+                          >
+                            {question.question_text.substring(
+                              question.question_text.indexOf(" ") + 1
+                            )}
+                          </span>
                         </div>
                         <span className="text-purple-400 ml-4">
                           {expandedQuestion === idx ? "▲" : "▼"}
@@ -442,21 +448,28 @@ export default function EnhancedTeamManagement({ selectedPdf, pdfDetails, onAssi
                               Currently Assigned:
                             </h4>
                             <div className="flex flex-wrap gap-2">
-                              {assignedReviewers[question.id].map((reviewer, rIdx) => (
-                                <div
-                                  key={rIdx}
-                                  className="flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs border border-blue-200"
-                                >
-                                  <span>👤 {reviewer.username}</span>
-                                  <button
-                                    onClick={() => handleUnassignReviewer(question.id, reviewer.user_id)}
-                                    className="text-blue-600 hover:text-blue-800 ml-1"
-                                    title="Remove assignment"
+                              {assignedReviewers[question.id].map(
+                                (reviewer, rIdx) => (
+                                  <div
+                                    key={rIdx}
+                                    className="flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs border border-blue-200"
                                   >
-                                    ×
-                                  </button>
-                                </div>
-                              ))}
+                                    <span>👤 {reviewer.username}</span>
+                                    <button
+                                      onClick={() =>
+                                        handleUnassignReviewer(
+                                          question.id,
+                                          reviewer.user_id
+                                        )
+                                      }
+                                      className="text-blue-600 hover:text-blue-800 ml-1"
+                                      title="Remove assignment"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                )
+                              )}
                             </div>
                           </div>
                         )}
@@ -472,25 +485,36 @@ export default function EnhancedTeamManagement({ selectedPdf, pdfDetails, onAssi
                           </h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                             {reviewers
-                              .filter(reviewer => 
-                                !assignedReviewers[question.id]?.some(ar => ar.user_id === reviewer.user_id)
+                              .filter(
+                                (reviewer) =>
+                                  !assignedReviewers[question.id]?.some(
+                                    (ar) => ar.user_id === reviewer.user_id
+                                  )
                               )
                               .map((reviewer) => (
                                 <button
                                   key={reviewer.user_id}
-                                  onClick={() => handleAssignReviewer(question.id, reviewer)}
+                                  onClick={() =>
+                                    handleAssignReviewer(question.id, reviewer)
+                                  }
                                   className={`flex items-center gap-2 p-2 rounded-lg text-sm transition-colors ${
                                     isDarkMode
                                       ? "bg-gray-800 border border-gray-600 hover:bg-gray-750 text-white"
                                       : "bg-white border border-gray-200 hover:bg-gray-50 text-gray-900"
                                   }`}
                                 >
-                                  <span className="text-lg">{getRoleIcon(reviewer.role)}</span>
+                                  <span className="text-lg">
+                                    {getRoleIcon(reviewer.role)}
+                                  </span>
                                   <div className="flex-1 text-left">
-                                    <div className="font-medium">{reviewer.username}</div>
+                                    <div className="font-medium">
+                                      {reviewer.username}
+                                    </div>
                                     <div
                                       className={`text-xs transition-colors ${
-                                        isDarkMode ? "text-gray-400" : "text-gray-500"
+                                        isDarkMode
+                                          ? "text-gray-400"
+                                          : "text-gray-500"
                                       }`}
                                     >
                                       {reviewer.email}
@@ -506,9 +530,12 @@ export default function EnhancedTeamManagement({ selectedPdf, pdfDetails, onAssi
                                 </button>
                               ))}
                           </div>
-                          
-                          {reviewers.filter(reviewer => 
-                            !assignedReviewers[question.id]?.some(ar => ar.user_id === reviewer.user_id)
+
+                          {reviewers.filter(
+                            (reviewer) =>
+                              !assignedReviewers[question.id]?.some(
+                                (ar) => ar.user_id === reviewer.user_id
+                              )
                           ).length === 0 && (
                             <p
                               className={`text-sm text-center py-4 transition-colors ${
