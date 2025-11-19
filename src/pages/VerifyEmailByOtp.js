@@ -9,8 +9,8 @@ const VerifyEmailByOtp = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const otpData = location.state?.otpData || {};
-  const email = otpData.email || ""; // get email from otpData
-  const title = otpData.title || ""; // optional, if you need the title
+  const email = otpData.email || "";
+  const title = otpData.title || "";
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -42,13 +42,13 @@ const VerifyEmailByOtp = () => {
         const data = await response.json();
         throw new Error(data.detail || "OTP verification failed");
       }
-      if(title === "register"){
-      setSuccess("Email verified successfully!");
-      setLoading(false);
-      navigate("/login")
-      }else{
-      navigate('/reset-passowrd', { state: { email } });
-      setLoading(false);
+      if (title === "register") {
+        setSuccess("Email verified successfully!");
+        setLoading(false);
+        navigate("/login");
+      } else {
+        navigate("/reset-passowrd", { state: { email } });
+        setLoading(false);
       }
     } catch (err) {
       setError(err.message);

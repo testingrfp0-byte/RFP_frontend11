@@ -11,7 +11,7 @@ const NGROK_HEADERS = {
 export default function ReviewerAssignedQuestions() {
   const { isDarkMode } = useTheme();
   const navigate = useNavigate();
-  const { documentId } = useParams(); // Get documentId from URL parameters
+  const { documentId } = useParams();
   const [reviewers, setReviewers] = useState([]);
   const [selectedReviewer, setSelectedReviewer] = useState(null);
   const [assignedQuestions, setAssignedQuestions] = useState([]);
@@ -27,15 +27,13 @@ export default function ReviewerAssignedQuestions() {
   const [pendingCount, setPendingCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const calledOnceRef = useRef(false);
-  const [documentQuestions, setDocumentQuestions] = useState([]); // New state for document-specific questions
+  const [documentQuestions, setDocumentQuestions] = useState([]);
 
   const handleFilterClick = (status) => {
     setFilterStatus(status);
     if (documentId) {
-      // If viewing document-specific questions, filter those
       filterDocumentQuestions(status);
     } else {
-      // Otherwise, filter reviewer questions
       filterQuestions(status);
     }
   };
@@ -50,10 +48,9 @@ export default function ReviewerAssignedQuestions() {
     }
   };
 
-  // New function to filter document-specific questions
   const filterDocumentQuestions = (status) => {
     if (status === "all") {
-      setFilteredQuestions(documentQuestions); // Assuming documentQuestions is the source
+      setFilteredQuestions(documentQuestions);
     } else {
       setFilteredQuestions(
         documentQuestions.filter((q) => q.status === status)
@@ -295,14 +292,12 @@ export default function ReviewerAssignedQuestions() {
   }, [navigate]);
 
   useEffect(() => {
-    // If documentId is present, fetch questions for that document
     if (documentId) {
       fetchQuestionsForDocument(documentId);
     } else if (userRole && userRole !== "reviewer") {
-      // Otherwise, if not a reviewer, fetch reviewers
       fetchReviewers();
     }
-  }, [userRole, documentId]); // Add documentId to dependency array
+  }, [userRole, documentId]);
 
   const fetchReviewerQuestions = async (reviewerUsername) => {
     setLoading(true);
@@ -415,7 +410,6 @@ export default function ReviewerAssignedQuestions() {
             };
           });
 
-        // Calculate counts for each status
         const submitted = reviewerQuestions.filter(
           (q) => q.status === "submitted"
         ).length;
@@ -450,7 +444,6 @@ export default function ReviewerAssignedQuestions() {
     }
   };
 
-  // New function to fetch questions for a specific document
   const fetchQuestionsForDocument = async (docId) => {
     setLoading(true);
     setError(null);
@@ -471,45 +464,55 @@ export default function ReviewerAssignedQuestions() {
         Authorization: `Bearer ${token}`,
       };
 
-      // Fetch document details to get its questions
-      const pdfDetailsRes = await fetch(`${API_BASE_URL}/rfpdetails/${docId}`, { headers });
+      const pdfDetailsRes = await fetch(`${API_BASE_URL}/rfpdetails/${docId}`, {
+        headers,
+      });
       if (!pdfDetailsRes.ok) {
         throw new Error(`Failed to fetch details for document ${docId}`);
       }
       const pdfDetails = await pdfDetailsRes.json();
       let questions = [];
       if (pdfDetails.questions_by_section) {
-        pdfDetails.questions_by_section.forEach(section => {
+        pdfDetails.questions_by_section.forEach((section) => {
           questions = questions.concat(section.questions);
         });
       } else if (pdfDetails.questions) {
         questions = pdfDetails.questions;
       }
 
-      // We also need to get the submission status for these questions
-      const statusRes = await fetch(`${API_BASE_URL}/assign_user_status`, { headers });
+      const statusRes = await fetch(`${API_BASE_URL}/assign_user_status`, {
+        headers,
+      });
       if (!statusRes.ok) {
         throw new Error("Failed to fetch submission statuses");
       }
-      const statusData = (await statusRes.json()).data || (await statusRes.json());
+      const statusData =
+        (await statusRes.json()).data || (await statusRes.json());
 
-      const combinedQuestions = questions.map(q => {
-        const matchingStatus = statusData.find(s =>
-          (s.question_id && s.question_id === q.id) ||
-          (s.question && s.question.trim() === q.question.trim())
+      const combinedQuestions = questions.map((q) => {
+        const matchingStatus = statusData.find(
+          (s) =>
+            (s.question_id && s.question_id === q.id) ||
+            (s.question && s.question.trim() === q.question.trim())
         );
         return {
           ...q,
-          status: matchingStatus ? matchingStatus.status : "not assigned", // Default status
+          status: matchingStatus ? matchingStatus.status : "not assigned",
           user_id: matchingStatus ? matchingStatus.user_id : null,
           username: matchingStatus ? matchingStatus.username : null,
           submitted_at: matchingStatus ? matchingStatus.submitted_at : null,
         };
       });
 
-      const submitted = combinedQuestions.filter(q => q.status === "submitted").length;
-      const notSubmitted = combinedQuestions.filter(q => q.status === "not submitted").length;
-      const pending = combinedQuestions.filter(q => q.status === "process").length;
+      const submitted = combinedQuestions.filter(
+        (q) => q.status === "submitted"
+      ).length;
+      const notSubmitted = combinedQuestions.filter(
+        (q) => q.status === "not submitted"
+      ).length;
+      const pending = combinedQuestions.filter(
+        (q) => q.status === "process"
+      ).length;
 
       setSubmittedCount(submitted);
       setNotSubmittedCount(notSubmitted);
@@ -518,7 +521,6 @@ export default function ReviewerAssignedQuestions() {
 
       setDocumentQuestions(combinedQuestions);
       setFilteredQuestions(combinedQuestions);
-      // No selected reviewer when viewing document questions
       setSelectedReviewer(null);
     } catch (err) {
       console.error("Error fetching document questions:", err);
@@ -528,7 +530,6 @@ export default function ReviewerAssignedQuestions() {
     }
   };
 
-  // Conditional rendering based on documentId presence
   if (documentId) {
     return (
       <div
@@ -585,27 +586,18 @@ export default function ReviewerAssignedQuestions() {
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-start gap-3 flex-1">
-                       <span className="text-purple-400">
-                                              Q{" "}
-                                              {
-                                                question.question_text.split(
-                                                  " "
-                                                )[0]
-                                              }
-                                            </span>
-                                            <span
-                                              className={`font-medium text-sm leading-relaxed transition-colors ${
-                                                isDarkMode
-                                                  ? "text-white"
-                                                  : "text-gray-900"
-                                              }`}
-                                            >
-                                              {question.question_text.substring(
-                                                question.question_text.indexOf(
-                                                  " "
-                                                ) + 1
-                                              )}
-                                            </span>
+                      <span className="text-purple-400">
+                        Q {question.question_text?.split(" ")[0]}
+                      </span>
+                      <span
+                        className={`font-medium text-sm leading-relaxed transition-colors ${
+                          isDarkMode ? "text-white" : "text-gray-900"
+                        }`}
+                      >
+                        {question.question_text?.substring(
+                          question.question_text?.indexOf(" ") + 1
+                        )}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 ml-4">
                       <div
@@ -689,7 +681,6 @@ export default function ReviewerAssignedQuestions() {
     );
   }
 
-  // Existing return statement for reviewer-assigned questions
   return (
     <div
       className={`p-4 transition-colors ${
@@ -722,7 +713,6 @@ export default function ReviewerAssignedQuestions() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Reviewers List */}
           <div
             className={`p-6 rounded-xl shadow-xl transition-colors ${
               isDarkMode
@@ -856,7 +846,6 @@ export default function ReviewerAssignedQuestions() {
               )}
             </div>
 
-            {/* Add the filter controls */}
             {selectedReviewer && (
               <div
                 className={`gap-3 mb-6 flex items-center justify-start p-4 rounded-lg transition-colors ${
@@ -880,11 +869,15 @@ export default function ReviewerAssignedQuestions() {
                     className={`flex-grow px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       isDarkMode
                         ? "bg-gray-700 text-gray-300 border border-gray-600 focus:ring-purple-500 focus:border-purple-500"
-                      : "bg-white text-gray-700 border border-gray-300 focus:ring-purple-500 focus:border-purple-500"
+                        : "bg-white text-gray-700 border border-gray-300 focus:ring-purple-500 focus:border-purple-500"
                     }`}
                   >
-                    <option value="submitted">Submitted: {submittedCount}</option>
-                    <option value="not submitted">Not for me: {notSubmittedCount}</option>
+                    <option value="submitted">
+                      Submitted: {submittedCount}
+                    </option>
+                    <option value="not submitted">
+                      Not for me: {notSubmittedCount}
+                    </option>
                     <option value="process">Pending: {pendingCount}</option>
                     <option value="all">Total Questions: {totalCount}</option>
                   </select>
@@ -921,27 +914,18 @@ export default function ReviewerAssignedQuestions() {
                       >
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-start gap-3 flex-1">
-                             <span className="text-purple-400">
-                                              Q{" "}
-                                              {
-                                                question.question_text.split(
-                                                  " "
-                                                )[0]
-                                              }
-                                            </span>
-                                            <span
-                                              className={`font-medium text-sm leading-relaxed transition-colors ${
-                                                isDarkMode
-                                                  ? "text-white"
-                                                  : "text-gray-900"
-                                              }`}
-                                            >
-                                              {question.question_text.substring(
-                                                question.question_text.indexOf(
-                                                  " "
-                                                ) + 1
-                                              )}
-                                            </span>
+                            <span className="text-purple-400">
+                              Q {question?.question?.split(" ")[0]}
+                            </span>
+                            <span
+                              className={`font-medium text-sm leading-relaxed transition-colors ${
+                                isDarkMode ? "text-white" : "text-gray-900"
+                              }`}
+                            >
+                              {question?.question?.substring(
+                                question?.question.indexOf(" ") + 1
+                              )}
+                            </span>
                           </div>
                           <div className="flex items-center gap-2 ml-4">
                             <div
@@ -962,19 +946,25 @@ export default function ReviewerAssignedQuestions() {
 
                             <button
                               onClick={() => handleRemoveQuestion(question)}
-                              disabled={removingQuestion === (questionId || question.question)}
+                              disabled={
+                                removingQuestion ===
+                                (questionId || question.question)
+                              }
                               className={`bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 ${
-                                removingQuestion === (questionId || question.question)
+                                removingQuestion ===
+                                (questionId || question.question)
                                   ? "opacity-50 cursor-not-allowed"
                                   : ""
                               }`}
                               title={
-                                removingQuestion === (questionId || question.question)
+                                removingQuestion ===
+                                (questionId || question.question)
                                   ? "Removing question..."
                                   : "Remove question from reviewer"
                               }
                             >
-                              {removingQuestion === (questionId || question.question) ? (
+                              {removingQuestion ===
+                              (questionId || question.question) ? (
                                 <>
                                   <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
                                   Removing...

@@ -16,7 +16,6 @@ export default function Login() {
   const location = useLocation();
   const { updateProfileImage } = useUser();
 
-  // Check if user came from admin registration flow
   const isAdminFlow =
     location.state?.fromAdminRegister ||
     location.search.includes("admin=true") ||
@@ -68,7 +67,6 @@ export default function Login() {
 
       const data = await response.json();
 
-      // Fetch user details to get the role if not provided in login response
       let userRole = data.role;
       if (!userRole) {
         try {
@@ -109,7 +107,6 @@ export default function Login() {
           image_url: data.image_url,
         })
       );
-      // Set user profile image in context based on login response
       updateProfileImage(data.image_url || null);
 
       if (rememberMe) {
@@ -231,7 +228,9 @@ export default function Login() {
             <Link
               to="/forgot-password"
               className={`font-medium transition-colors ${
-                isDarkMode ? "text-purple-400 hover:text-purple-300" : "text-purple-600 hover:text-purple-500"
+                isDarkMode
+                  ? "text-purple-400 hover:text-purple-300"
+                  : "text-purple-600 hover:text-purple-500"
               }`}
             >
               Forgot password?

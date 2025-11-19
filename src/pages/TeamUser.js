@@ -33,11 +33,10 @@ export default function TeamUser() {
   const [recordsPerPage] = useState(10);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
-  const [activeTab, setActiveTab] = useState("reviewers"); // New state for active tab
-  const [reviewerUsers, setReviewerUsers] = useState([]); // New state for reviewer users
-  const [adminUsers, setAdminUsers] = useState([]); // New state for admin users
+  const [activeTab, setActiveTab] = useState("reviewers");
+  const [reviewerUsers, setReviewerUsers] = useState([]);
+  const [adminUsers, setAdminUsers] = useState([]);
 
-  // Fetch all users on mount
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -55,7 +54,6 @@ export default function TeamUser() {
         if (!res.ok) throw new Error("Failed to fetch users");
         const data = await res.json();
 
-        // Filter users into reviewers and admins and add is_active property
         setReviewerUsers(
           data
             .filter((user) => user.role === "reviewer")
@@ -115,14 +113,13 @@ export default function TeamUser() {
           email,
           password,
           mode: "add",
-          role: activeTab === "reviewers" ? "reviewer" : "admin", // Dynamically set role
+          role: activeTab === "reviewers" ? "reviewer" : "admin",
         }),
       });
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.detail || "Registration failed");
       }
-      // Update the correct user list based on the role
       const newUser = {
         username: name,
         email,
@@ -175,7 +172,6 @@ export default function TeamUser() {
         throw new Error(data.detail || "Failed to delete user");
       }
 
-      // Remove the user from the appropriate list
       if (userToDelete.role === "reviewer") {
         setReviewerUsers((prev) =>
           prev.filter((user) => user.email !== userToDelete.email)
@@ -213,7 +209,6 @@ export default function TeamUser() {
 
   const nPages = Math.ceil(filteredUsers.length / recordsPerPage);
 
-  // Handle page change
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const openConfirmDialog = (user) => {
@@ -297,7 +292,7 @@ export default function TeamUser() {
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
-                    setCurrentPage(1); // Reset to first page on search
+                    setCurrentPage(1);
                   }}
                   className={`w-60 p-3 rounded-lg transition-colors focus:border-purple-500 focus:ring-1 focus:ring-purple-500 ${
                     isDarkMode
@@ -315,7 +310,6 @@ export default function TeamUser() {
               </div>
             </div>
 
-            {/* Tabs */}
             <div className="mb-6">
               <div
                 className={`flex space-x-1 p-1 rounded-lg ${
@@ -474,8 +468,7 @@ export default function TeamUser() {
                       )}
                     </tr>
                   ))}
-                  {filteredUsers.length ===
-                    0 /* Also ensure no content is shown if the user is loading or an error */ && (
+                  {filteredUsers.length === 0 && (
                     <tr>
                       <td
                         colSpan={activeTab === "reviewers" ? 4 : 3}
@@ -550,7 +543,6 @@ export default function TeamUser() {
           </div>
         )}
 
-        {/* Modal */}
         {showModal && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
             <div
@@ -634,47 +626,6 @@ export default function TeamUser() {
                     required
                   />
                 </div>
-
-                {/* <div>
-                  <label
-                    className={`block text-sm font-medium mb-2 transition-colors ${
-                      isDarkMode ? "text-gray-300" : "text-gray-700"
-                    }`}
-                  >
-                    Temporary Password
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Generated password"
-                      value={password}
-                      readOnly
-                      className={`flex-1 p-3 rounded-lg font-mono transition-colors ${
-                        isDarkMode
-                          ? "bg-gray-700 border border-gray-600 text-white"
-                          : "bg-gray-100 border border-gray-300 text-gray-900"
-                      }`}
-                    />
-                    <button
-                      type="button"
-                      className={`px-4 py-3 rounded-lg transition-colors ${
-                        isDarkMode
-                          ? "bg-gray-600 hover:bg-gray-500 text-white"
-                          : "bg-gray-300 hover:bg-gray-400 text-gray-700"
-                      }`}
-                      onClick={() => setPassword(generatePassword())}
-                    >
-                      🔄
-                    </button>
-                  </div>
-                  <p
-                    className={`text-sm mt-1 transition-colors ${
-                      isDarkMode ? "text-gray-500" : "text-gray-500"
-                    }`}
-                  >
-                    User can change this password after first login
-                  </p>
-                </div> */}
 
                 {modalMessage && (
                   <div

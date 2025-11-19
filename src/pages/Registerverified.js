@@ -127,28 +127,6 @@ export default function RegisterVerified() {
             />
           </div>
 
-          {/* <div>
-            <label
-              className={`block text-sm font-medium mb-2 transition-colors ${
-                isDarkMode ? "text-gray-300" : "text-gray-700"
-              }`}
-            >
-              Old Password
-            </label>
-            <input
-              type="password"
-              placeholder="Enter old password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={`w-full p-3 rounded-lg transition-colors focus:border-purple-500 focus:ring-1 focus:ring-purple-500 ${
-                isDarkMode
-                  ? "bg-gray-700 border border-gray-600 text-white placeholder-gray-400"
-                  : "bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-500"
-              }`}
-              required
-            />
-          </div> */}
-
           <div>
             <label
               className={`block text-sm font-medium mb-2 transition-colors ${

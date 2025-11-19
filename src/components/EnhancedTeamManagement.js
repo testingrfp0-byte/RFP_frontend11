@@ -103,7 +103,6 @@ export default function EnhancedTeamManagement({
       });
 
       if (response.ok) {
-        // Update local state
         setAssignedReviewers((prev) => ({
           ...prev,
           [questionId]: [
@@ -112,12 +111,10 @@ export default function EnhancedTeamManagement({
           ],
         }));
 
-        // Notify parent component
         if (onAssignmentUpdate) {
           onAssignmentUpdate();
         }
 
-        // Send notification
         const notifyPayload = {
           user_id: [user.user_id],
           ques_ids: [questionId],
@@ -154,7 +151,6 @@ export default function EnhancedTeamManagement({
       );
 
       if (response.ok) {
-        // Update local state
         setAssignedReviewers((prev) => ({
           ...prev,
           [questionId]: (prev[questionId] || []).filter(
@@ -162,7 +158,6 @@ export default function EnhancedTeamManagement({
           ),
         }));
 
-        // Notify parent component
         if (onAssignmentUpdate) {
           onAssignmentUpdate();
         }
@@ -248,7 +243,6 @@ export default function EnhancedTeamManagement({
       }`}
     >
       <div className="p-6">
-        {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="w-2 h-8 bg-purple-500 rounded-full"></div>
           <h2
@@ -282,7 +276,6 @@ export default function EnhancedTeamManagement({
           </div>
         ) : (
           <>
-            {/* Team Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div
                 className={`p-4 rounded-lg transition-colors ${
@@ -378,7 +371,6 @@ export default function EnhancedTeamManagement({
               </div>
             </div>
 
-            {/* Question Assignments */}
             <div>
               <h3
                 className={`text-lg font-semibold mb-4 transition-colors ${
@@ -437,7 +429,6 @@ export default function EnhancedTeamManagement({
                             : "border-gray-200 bg-gray-100"
                         }`}
                       >
-                        {/* Current Assignments */}
                         {assignedReviewers[question.id]?.length > 0 && (
                           <div className="mb-4">
                             <h4
@@ -474,7 +465,6 @@ export default function EnhancedTeamManagement({
                           </div>
                         )}
 
-                        {/* Available Reviewers */}
                         <div>
                           <h4
                             className={`text-sm font-medium mb-2 transition-colors ${

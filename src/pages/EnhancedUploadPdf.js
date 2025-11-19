@@ -16,30 +16,13 @@ export default function EnhancedUploadPdf({ setPdfList }) {
   const [users, setUsers] = useState([]);
   const [assignDropdown, setAssignDropdown] = useState(null);
   const [assignStatus, setAssignStatus] = useState([]);
-  const [userRole, setUserRole] = useState("");
   const fileInputRef = useRef(null);
   const calledOnceRef = useRef(false);
-  const pdfListLoadedRef = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
   const [projectName, setProjectName] = useState("");
   const dropRef = useRef(null);
 
-  // Get user role
   useEffect(() => {
-    const session = localStorage.getItem("session");
-    if (session) {
-      try {
-        const parsedSession = JSON.parse(session);
-        setUserRole(parsedSession.role || "admin");
-      } catch (error) {
-        console.error("Error parsing session:", error);
-        setUserRole("admin");
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    // Fetch users for assignment
     const fetchUsers = async () => {
       try {
         const session = localStorage.getItem("session");
@@ -104,7 +87,6 @@ export default function EnhancedUploadPdf({ setPdfList }) {
     setFiles((prevFiles) => {
       const updatedFiles = prevFiles.filter((_, i) => i !== index);
 
-      // input reset everytime after deletion
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -202,8 +184,6 @@ export default function EnhancedUploadPdf({ setPdfList }) {
         }
       }
 
-      // Refresh the PDF list after all uploads
-
       if (!hasDuplicates) {
         fetchPdfList();
         clearAllFiles();
@@ -282,7 +262,6 @@ export default function EnhancedUploadPdf({ setPdfList }) {
     e.preventDefault();
     e.stopPropagation();
 
-    // Only set dragging to false if we're leaving the drop area
     if (dropRef.current && !dropRef.current.contains(e.relatedTarget)) {
       setIsDragging(false);
     }
@@ -295,7 +274,6 @@ export default function EnhancedUploadPdf({ setPdfList }) {
 
     const droppedFiles = Array.from(e.dataTransfer.files);
     if (droppedFiles && droppedFiles.length > 0) {
-      // Check if files are supported types
       const supportedTypes = [
         "application/pdf",
         "application/msword",
@@ -343,23 +321,7 @@ export default function EnhancedUploadPdf({ setPdfList }) {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-6 flex items-start justify-between flex-col">
-        <div>
-          {/* <h2
-            className={`text-3xl font-bold mb-2 flex items-center gap-3 transition-colors ${
-              isDarkMode ? "text-white" : "text-gray-900"
-            }`}
-          >
-            <span className="text-4xl">📤</span>
-            Document Upload Center
-          </h2> */}
-          {/* <p
-            className={`transition-colors ${
-              isDarkMode ? "text-gray-400" : "text-gray-600"
-            }`}
-          >
-            Upload RFP documents for analysis or learning materials for training
-          </p> */}
-        </div>
+        <div></div>
 
         <div className="w-2/2 w-full">
           <div
@@ -394,23 +356,6 @@ export default function EnhancedUploadPdf({ setPdfList }) {
                 } h-[48px] `}
                 disabled={loading}
               />
-              {/* <button
-                onClick={handleUpload}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                disabled={loading || files.length === 0}
-              >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <span>📤</span>
-                    Upload & Analyze
-                  </>
-                )}
-              </button> */}
             </div>
             <p
               className={`text-sm ${
@@ -420,7 +365,6 @@ export default function EnhancedUploadPdf({ setPdfList }) {
               or drag and drop files here
             </p>
 
-            {/* Selected files list */}
             {files.length > 0 && (
               <div className="w-full max-w-2xl">
                 <div
@@ -485,7 +429,6 @@ export default function EnhancedUploadPdf({ setPdfList }) {
                     ))}
                   </div>
 
-                  {/* Start Analysis Button - Prominently positioned after file selection */}
                   <div className="mt-4 flex justify-center">
                     <button
                       onClick={handleUpload}
@@ -509,13 +452,6 @@ export default function EnhancedUploadPdf({ setPdfList }) {
               </div>
             )}
           </div>
-          {/* <p
-            className={`text-xs transition-colors ${
-              isDarkMode ? "text-gray-500" : "text-gray-500"
-            }`}
-          >
-            Supported formats: PDF, DOC, DOCX, PPT, PPTX
-          </p> */}
         </div>
       </div>
 
@@ -582,7 +518,6 @@ export default function EnhancedUploadPdf({ setPdfList }) {
           </div>
         )}
 
-        {/* Questions Section */}
         {questions.length > 0 && (
           <div
             className={`rounded-xl shadow-xl transition-colors ${
@@ -687,7 +622,6 @@ export default function EnhancedUploadPdf({ setPdfList }) {
                             )}
                           </div>
                         </div>
-                        {/* Assignment Dropdown */}
                         {assignDropdown === idx && (
                           <div className="mt-3">
                             <select

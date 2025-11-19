@@ -36,7 +36,7 @@ export default function AdminRegister() {
         const data = await response.json();
         throw new Error(data.detail || "Registration failed");
       }
-      // Auto-login after registration
+
       const loginResponse = await fetch(`${API_BASE_URL}/login`, {
         method: "POST",
         headers: {

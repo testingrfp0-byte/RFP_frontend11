@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import ConfirmationDialog from "../components/ConfirmationDialog";
-import { useNavigate } from "react-router-dom";
 import EnhancedUploadPdf from "./EnhancedUploadPdf";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
@@ -17,7 +16,13 @@ export default function Library({ setPdfList }) {
   const [trainingMaterials, setTrainingMaterials] = useState([]);
   const [learningDocuments, setLearningDocuments] = useState([]);
   const [clean, setClean] = useState([]);
-  const [project_name, setProjectName] = useState("");
+
+  // NEW: Track available projects and selected project
+  const [availableProjects, setAvailableProjects] = useState([]);
+  const [selectedProject, setSelectedProject] = useState("");
+  const [newProjectName, setNewProjectName] = useState("");
+  const [showProjectNameError, setShowProjectNameError] = useState(false);
+  const [useExistingProject, setUseExistingProject] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState([]);
@@ -27,12 +32,12 @@ export default function Library({ setPdfList }) {
   const [deleteMessage, setDeleteMessage] = useState("");
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [rfpToDelete, setRfpToDelete] = useState(null);
-  const navigate = useNavigate();
   const trainingFileInputRef = useRef(null);
   const learningFileInputRef = useRef(null);
   const historicFileInputRef = useRef(null);
   const cleanFileInputRef = useRef(null);
   const [dragOver, setDragOver] = useState({});
+
   useEffect(() => {
     const session = localStorage.getItem("session");
     if (session) {
@@ -46,13 +51,32 @@ export default function Library({ setPdfList }) {
     }
   }, []);
 
-  // Fetch library data
   useEffect(() => {
     if (!calledOnceRef.current) {
       fetchLibraryData();
       calledOnceRef.current = true;
     }
   }, []);
+
+  // NEW: Extract unique projects from all documents
+  useEffect(() => {
+    const allDocuments = [
+      ...historicRFPs,
+      ...clean,
+      ...trainingMaterials,
+      ...learningDocuments,
+    ];
+
+    const projects = [
+      ...new Set(
+        allDocuments
+          .filter((doc) => doc.project_name && doc.project_name.trim() !== "")
+          .map((doc) => doc.project_name)
+      ),
+    ].sort();
+
+    setAvailableProjects(projects);
+  }, [historicRFPs, clean, trainingMaterials, learningDocuments]);
 
   const fetchLibraryData = async () => {
     setLoading(true);
@@ -64,7 +88,6 @@ export default function Library({ setPdfList }) {
         ...(token && { Authorization: `Bearer ${token}` }),
       };
 
-      // Fetch historic RFPs (completed RFP responses)
       const historicResponse = await fetch(`${API_BASE_URL}/filedetails`, {
         headers,
       });
@@ -188,7 +211,6 @@ export default function Library({ setPdfList }) {
     setRfpToDelete(null);
   }, []);
 
-  // Handle drag events
   const handleDragOver = (e, category) => {
     e.preventDefault();
     e.stopPropagation();
@@ -204,12 +226,10 @@ export default function Library({ setPdfList }) {
   const handleDragLeave = (e, category) => {
     e.preventDefault();
     e.stopPropagation();
-    // Only set to false if we're leaving the actual drop zone, not a child element
     if (e.currentTarget.contains(e.relatedTarget)) return;
     setDragOver((prev) => ({ ...prev, [category]: false }));
   };
 
-  // Handle file drop
   const handleDrop = (e, category) => {
     e.preventDefault();
     e.stopPropagation();
@@ -217,47 +237,65 @@ export default function Library({ setPdfList }) {
 
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
-      handleFiles(files, category, project_name);
+      handleFiles(files, category);
     }
   };
 
-  // Handle file selection (from input or drop)
-  const handleFiles = (files, category, project_name) => {
-    console.log("object", files.length, !files, project_name);
+  // UPDATED: Get the actual project name to use
+  const getProjectNameForUpload = () => {
+    if (useExistingProject && selectedProject) {
+      return selectedProject;
+    } else if (newProjectName.trim()) {
+      return newProjectName.trim();
+    }
+    return "";
+  };
+
+  const handleFiles = (files, category) => {
     if (!files || files.length === 0) return;
 
-    if (!project_name?.trim()) {
+    const projectName = getProjectNameForUpload();
+    if (!projectName) {
+      setShowProjectNameError(true);
       return;
     }
 
-    console.log("files.length", files.length);
-    // Add files to uploading state
+    setShowProjectNameError(false);
+
     const newUploadingFiles = Array.from(files).map((file) => ({
       name: file.name,
       category,
       progress: 0,
     }));
-    console.log("setUploadingFiles", files.length);
     setUploadingFiles((prev) => [...prev, ...newUploadingFiles]);
-
-    console.log("files.", files.length);
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      console.log("files.length", files.length);
-      console.log("file", file);
-      uploadSingleFile(file, category, project_name);
+      uploadSingleFile(file, category, projectName);
     }
   };
 
   const handleFileUpload = (event, category) => {
-    console.log("handleFileUpload");
+    event.preventDefault();
+
+    const projectName = getProjectNameForUpload();
+    if (!projectName) {
+      setShowProjectNameError(true);
+      event.target.value = "";
+      return;
+    }
+
+    setShowProjectNameError(false);
+
     const files = event.target.files;
-    handleFiles(files, category, project_name);
+    if (files && files.length > 0) {
+      handleFiles(files, category);
+    }
+
     event.target.value = "";
   };
 
-  const uploadSingleFile = async (file, category) => {
+  const uploadSingleFile = async (file, category, projectName) => {
     setUploadProgress((prev) => ({
       ...prev,
       [file.name]: 0,
@@ -267,7 +305,7 @@ export default function Library({ setPdfList }) {
       const formData = new FormData();
       formData.append("files", file);
       formData.append("category", category);
-      formData.append("project_name", project_name);
+      formData.append("project_name", projectName);
 
       const session = localStorage.getItem("session");
       const token = session ? JSON.parse(session).token : null;
@@ -295,25 +333,32 @@ export default function Library({ setPdfList }) {
       }
 
       const result = await response.json();
-      console.log("Upload successful:", result);
-      setProjectName("");
-      //  window.location.reload()
+
       clearInterval(progressInterval);
       setUploadProgress((prev) => ({
         ...prev,
         [file.name]: 100,
       }));
 
-      // Add to appropriate list
+      // Reset form after successful upload
+      setNewProjectName("");
+      setSelectedProject("");
+      setUseExistingProject(false);
+
+      // Create the new document object with the actual data from server response
       const newDocument = {
-        id: result.document_id,
+        id: result.document_id || result.id,
+        filename: file.name,
         name: file.name,
         type: file.name.split(".").pop().toUpperCase(),
         size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
+        uploaded_at: new Date().toISOString(),
         uploadedAt: new Date().toISOString().split("T")[0],
         category: category,
+        project_name: projectName,
       };
 
+      // Immediately update the state with the new document
       if (category === "clean") {
         setClean((prev) => [newDocument, ...prev]);
       } else if (category === "training") {
@@ -321,11 +366,10 @@ export default function Library({ setPdfList }) {
       } else if (category === "learning") {
         setLearningDocuments((prev) => [newDocument, ...prev]);
       } else if (category === "center") {
-        // fetchPdfList();
         setHistoricRFPs((prev) => [newDocument, ...prev]);
       }
 
-      // Remove from uploading files after a delay
+      // Also refresh from server to ensure data consistency
       setTimeout(() => {
         setUploadingFiles((prev) => prev.filter((f) => f.name !== file.name));
         setUploadProgress((prev) => {
@@ -333,6 +377,7 @@ export default function Library({ setPdfList }) {
           delete newProgress[file.name];
           return newProgress;
         });
+        fetchLibraryData(); // This will sync with server data
       }, 1000);
     } catch (error) {
       console.error("Error uploading file:", error);
@@ -344,6 +389,28 @@ export default function Library({ setPdfList }) {
       });
     }
   };
+
+  // Helper function to group files by project name
+  const groupFilesByProject = (files) => {
+    return files.reduce((acc, file) => {
+      const projectName = file.project_name || "Uncategorized";
+      if (!acc[projectName]) {
+        acc[projectName] = [];
+      }
+      acc[projectName].push(file);
+      return acc;
+    }, {});
+  };
+
+  // Group all file types by project name
+  const groupedCleanFiles = groupFilesByProject(clean);
+  const groupedTrainingFiles = groupFilesByProject(trainingMaterials);
+  const groupedLearningFiles = groupFilesByProject(learningDocuments);
+
+  // Sort project names alphabetically for each category
+  const sortedCleanProjects = Object.keys(groupedCleanFiles).sort();
+  const sortedTrainingProjects = Object.keys(groupedTrainingFiles).sort();
+  const sortedLearningProjects = Object.keys(groupedLearningFiles).sort();
 
   const tabs = [
     {
@@ -401,6 +468,7 @@ export default function Library({ setPdfList }) {
             >
               {doc.filename || doc.name}
             </h3>
+
             <div className="flex flex-wrap items-center gap-3 text-xs">
               <span
                 className={`${isDarkMode ? "text-gray-400" : "text-gray-500"}`}
@@ -438,7 +506,7 @@ export default function Library({ setPdfList }) {
               <button
                 className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                 onClick={(e) => {
-                  e.stopPropagation(); // Prevent card click when deleting
+                  e.stopPropagation();
                   handleDeletePdf(doc.document_id || doc.id);
                 }}
               >
@@ -451,6 +519,78 @@ export default function Library({ setPdfList }) {
     </div>
   );
 
+  // Helper function to render grouped files
+  const renderGroupedFiles = (groupedFiles, sortedProjects, emptyMessage) => {
+    if (sortedProjects.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <div
+            className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors ${
+              isDarkMode ? "bg-gray-700" : "bg-gray-200"
+            }`}
+          >
+            <span
+              className={`text-2xl transition-colors ${
+                isDarkMode ? "text-gray-500" : "text-gray-400"
+              }`}
+            >
+              📋
+            </span>
+          </div>
+          <p
+            className={`text-lg transition-colors ${
+              isDarkMode ? "text-gray-400" : "text-gray-600"
+            }`}
+          >
+            {emptyMessage}
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-8">
+        {sortedProjects.map((projectName) => {
+          const projectFiles = groupedFiles[projectName];
+          return (
+            <div key={projectName} className="space-y-4">
+              {/* Project Header */}
+              <div
+                className={`px-4 py-3 rounded-lg border-l-4 border-purple-500 ${
+                  isDarkMode
+                    ? "bg-gray-800 border-gray-700"
+                    : "bg-white border-gray-200"
+                }`}
+              >
+                <h3
+                  className={`text-lg font-semibold ${
+                    isDarkMode ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  {projectName}
+                </h3>
+                <p
+                  className={`text-sm ${
+                    isDarkMode ? "text-gray-400" : "text-gray-600"
+                  }`}
+                >
+                  {projectFiles.length} document
+                  {projectFiles.length !== 1 ? "s" : ""}
+                </p>
+              </div>
+
+              {/* Files Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {projectFiles.map((file) => renderDocumentCard(file))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // UPDATED: Enhanced upload section with project selection
   const renderUploadSection = (category, title) => {
     if (userRole === "reviewer") return null;
 
@@ -462,24 +602,33 @@ export default function Library({ setPdfList }) {
 
     return (
       <>
-        <div className="mb-4">
-          <input
-            type="text"
-            placeholder="Enter project name"
-            value={project_name}
-            onChange={(e) => setProjectName(e.target.value)}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2
-        ${
-          !project_name.trim()
-            ? "border-red-500 focus:ring-red-500"
-            : "border-gray-300 focus:ring-purple-500"
-        }`}
-          />
-          {/* Optional inline error message */}
-          {!project_name.trim() && (
-            <p className="text-red-500 text-sm mt-1">
-              Project name is required
-            </p>
+        <div className="space-y-4 mb-6">
+          <div>
+            <label
+              className={`block text-sm font-medium mb-2 ${
+                isDarkMode ? "text-gray-300" : "text-gray-700"
+              }`}
+            >
+              Project Name
+            </label>
+            <input
+              type="text"
+              placeholder="Enter project name"
+              value={newProjectName}
+              onChange={(e) => {
+                setNewProjectName(e.target.value);
+                if (e.target.value.trim()) setShowProjectNameError(false);
+              }}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                showProjectNameError && !newProjectName.trim()
+                  ? "border-red-500 focus:ring-red-500"
+                  : "border-gray-300 focus:ring-purple-500"
+              } ${isDarkMode ? "bg-gray-700 text-white" : "bg-white"}`}
+            />
+          </div>
+
+          {showProjectNameError && (
+            <p className="text-red-500 text-sm">Project name is required</p>
           )}
         </div>
 
@@ -555,7 +704,6 @@ export default function Library({ setPdfList }) {
       }`}
     >
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
           <h1
             className={`text-3xl font-bold mb-2 flex items-center gap-3 transition-colors ${
@@ -575,7 +723,6 @@ export default function Library({ setPdfList }) {
           </p>
         </div>
 
-        {/* Upload Progress */}
         {uploadingFiles.length > 0 && (
           <div
             className={`mb-6 p-4 rounded-lg transition-colors ${
@@ -618,7 +765,6 @@ export default function Library({ setPdfList }) {
           </div>
         )}
 
-        {/* Tabs */}
         <div className="mb-6">
           <div
             className={`flex space-x-1 p-1 rounded-lg ${
@@ -659,7 +805,6 @@ export default function Library({ setPdfList }) {
           </div>
         </div>
 
-        {/* Content */}
         <div
           className={`rounded-xl shadow-xl p-6 transition-colors ${
             isDarkMode
@@ -680,7 +825,6 @@ export default function Library({ setPdfList }) {
             </div>
           ) : (
             <>
-              {/* Delete Message and Confirmation Dialog */}
               {deleteMessage && (
                 <div
                   className={`mb-4 p-3 rounded-lg text-sm ${
@@ -704,7 +848,6 @@ export default function Library({ setPdfList }) {
                 message="Are you sure you want to delete this document? This action cannot be undone."
               />
 
-              {/* Upload RFP Tab */}
               {activeTab === "upload" && (
                 <div>
                   <div className="flex items-center gap-3 mb-6">
@@ -720,17 +863,14 @@ export default function Library({ setPdfList }) {
                   <div className="space-y-4">
                     {<EnhancedUploadPdf setPdfList={setPdfList} />}
                     <div className="mt-6">
-                      {/* <h3
-                        className={`font-medium mb-4 ${
-                          isDarkMode ? "text-white" : "text-gray-900"
-                        }`}
-                      >
-                        Recently Uploaded RFPs
-                      </h3> */}
                       {historicRFPs.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {historicRFPs.map((material) =>
-                            renderDocumentCard(material)
+                        <div className="space-y-8">
+                          {renderGroupedFiles(
+                            groupFilesByProject(historicRFPs),
+                            Object.keys(
+                              groupFilesByProject(historicRFPs)
+                            ).sort(),
+                            "No RFP documents available"
                           )}
                         </div>
                       )}
@@ -739,7 +879,6 @@ export default function Library({ setPdfList }) {
                 </div>
               )}
 
-              {/* Historic RFPs Tab */}
               {activeTab === "historic" && (
                 <div>
                   <div className="flex items-center gap-3 mb-6">
@@ -754,38 +893,14 @@ export default function Library({ setPdfList }) {
                   </div>
                   {renderUploadSection("clean", "Historic Materials")}
 
-                  {clean.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {clean.map((rfp) => renderDocumentCard(rfp))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <div
-                        className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors ${
-                          isDarkMode ? "bg-gray-700" : "bg-gray-200"
-                        }`}
-                      >
-                        <span
-                          className={`text-2xl transition-colors ${
-                            isDarkMode ? "text-gray-500" : "text-gray-400"
-                          }`}
-                        >
-                          📋
-                        </span>
-                      </div>
-                      <p
-                        className={`text-lg transition-colors ${
-                          isDarkMode ? "text-gray-400" : "text-gray-600"
-                        }`}
-                      >
-                        No historic RFPs available
-                      </p>
-                    </div>
+                  {renderGroupedFiles(
+                    groupedCleanFiles,
+                    sortedCleanProjects,
+                    "No historic RFPs available"
                   )}
                 </div>
               )}
 
-              {/* Training Materials Tab */}
               {activeTab === "training" && (
                 <div>
                   <div className="flex items-center gap-3 mb-6">
@@ -800,18 +915,15 @@ export default function Library({ setPdfList }) {
                   </div>
                   <div className="space-y-4">
                     {renderUploadSection("training", "Training Materials")}
-                    {trainingMaterials.length > 0 && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {trainingMaterials.map((material) =>
-                          renderDocumentCard(material)
-                        )}
-                      </div>
+                    {renderGroupedFiles(
+                      groupedTrainingFiles,
+                      sortedTrainingProjects,
+                      "No training materials available"
                     )}
                   </div>
                 </div>
               )}
 
-              {/* Learning Documents Tab */}
               {activeTab === "learning" && (
                 <div>
                   <div className="flex items-center gap-3 mb-6">
@@ -826,12 +938,10 @@ export default function Library({ setPdfList }) {
                   </div>
                   <div className="space-y-4">
                     {renderUploadSection("learning", "Learning Documents")}
-                    {learningDocuments.length > 0 && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {learningDocuments.map((doc) =>
-                          renderDocumentCard(doc)
-                        )}
-                      </div>
+                    {renderGroupedFiles(
+                      groupedLearningFiles,
+                      sortedLearningProjects,
+                      "No learning documents available"
                     )}
                   </div>
                 </div>

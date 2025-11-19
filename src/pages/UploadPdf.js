@@ -14,11 +14,10 @@ export default function UploadPdf() {
   const [expandedQuestion, setExpandedQuestion] = useState(null);
   const [answers, setAnswers] = useState([]);
   const [users, setUsers] = useState([]);
-  const [assignDropdown, setAssignDropdown] = useState(null); // index of question for which dropdown is open
-  const [assignStatus, setAssignStatus] = useState([]); // status per question
+  const [assignDropdown, setAssignDropdown] = useState(null);
+  const [assignStatus, setAssignStatus] = useState([]);
 
   useEffect(() => {
-    // Fetch users for assignment
     const fetchUsers = async () => {
       try {
         const session = localStorage.getItem("session");
@@ -73,29 +72,22 @@ export default function UploadPdf() {
       if (!response.ok) throw new Error("Upload failed");
       const data = await response.json();
 
-      // Log the response to debug the structure
-      console.log("API Response:", data);
-
       setMessage("PDF uploaded and processed successfully!");
       setSummary(data.summary || "");
 
-      // Safely handle questions data - ensure it's an array
       let questionsArray = [];
       if (data.total_questions) {
         if (Array.isArray(data.total_questions)) {
           questionsArray = data.total_questions;
         } else if (typeof data.total_questions === "string") {
-          // If it's a string, try to split it or wrap it in an array
           questionsArray = [data.total_questions];
         } else if (typeof data.total_questions === "object") {
-          // If it's an object, try to extract values or convert to array
           questionsArray = Object.values(data.total_questions).filter(
             (q) => q && typeof q === "string"
           );
         }
       }
 
-      // Also check for other possible question field names
       if (questionsArray.length === 0) {
         if (data.questions && Array.isArray(data.questions)) {
           questionsArray = data.questions;
@@ -128,7 +120,6 @@ export default function UploadPdf() {
   };
 
   const handleUserSelect = async (qIdx, user) => {
-    // Call API to save assignment (question, username, email)
     try {
       const session = localStorage.getItem("session");
       const token = session ? JSON.parse(session).token : null;
@@ -190,7 +181,6 @@ export default function UploadPdf() {
           </p>
         </div>
 
-        {/* Upload Section */}
         <div
           className={`p-6 rounded-xl shadow-xl mb-6 transition-colors ${
             isDarkMode
@@ -269,7 +259,6 @@ export default function UploadPdf() {
           )}
         </div>
 
-        {/* Summary Section */}
         {summary && (
           <div
             className={`rounded-xl shadow-xl mb-6 transition-colors ${
@@ -320,7 +309,6 @@ export default function UploadPdf() {
           </div>
         )}
 
-        {/* Questions Section */}
         {questions.length > 0 && (
           <div
             className={`rounded-xl shadow-xl transition-colors ${
@@ -425,7 +413,6 @@ export default function UploadPdf() {
                             )}
                           </div>
                         </div>
-                        {/* Assignment Dropdown */}
                         {assignDropdown === idx && (
                           <div className="mt-3">
                             <select

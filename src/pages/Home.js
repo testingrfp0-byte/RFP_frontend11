@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useLocation, useNavigate } from "react-router-dom";
-import EnhancedUploadPdf from "./EnhancedUploadPdf";
 import ConfirmationDialog from "../components/ConfirmationDialog";
 import EditQuestionDialog from "../components/EditQuestionDialog";
 import ToasterNotification from "../components/ToasterNotification";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import { Send } from "lucide-react";
+import axios from "axios";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 const SUBMIT_CHECK_URL = `${API_BASE_URL}/check_submit`;
@@ -17,43 +17,25 @@ const NGROK_HEADERS = {
 };
 
 export default function Home({
-  userName,
-  file,
-  setFile,
-  loading,
-  setLoading,
-  summary,
-  setSummary,
-  checklist,
-  setChecklist,
-  responses,
-  setResponses,
-  expandedIndex,
-  setExpandedIndex,
-  clientName,
-  setClientName,
-  handleFileChange,
-  handleUpload,
-  handleEditResponse,
   pdfList,
   setPdfList,
   pdfLoading,
   pageType,
   selfAssignMode = false,
 }) {
+  const { isDarkMode } = useTheme();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [deleteMessage, setDeleteMessage] = useState("");
   const [selectedPdf, setSelectedPdf] = useState(null);
-  console.log(selectedPdf, "selectedPdf");
 
   const [pdfDetails, setPdfDetails] = useState(null);
   const [expandedSummary, setExpandedSummary] = useState(false);
   const [expandedQuestion, setExpandedQuestion] = useState(null);
-  const [answers, setAnswers] = useState([]);
   const [assignDropdown, setAssignDropdown] = useState(null);
   const [users, setUsers] = useState([]);
 
   const [loadingReassign, setLoadingReassign] = useState(false);
-  const [usersLoading, setUsersLoading] = useState(true);
   const [assignStatus, setAssignStatus] = useState([]);
 
   const [detailsLoading, setDetailsLoading] = useState(false);
@@ -61,7 +43,6 @@ export default function Home({
   const [currentUser, setCurrentUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [assignedQuestions, setAssignedQuestions] = useState([]);
-  const [showalldata, setshowalldata] = useState([]);
 
   const [editingAnswer, setEditingAnswer] = useState({});
 
@@ -73,9 +54,6 @@ export default function Home({
     useState(false);
   const [submittedQuestionsError, setSubmittedQuestionsError] = useState(null);
   const [generatedAnswer, setGeneratedAnswer] = useState({});
-  const { isDarkMode } = useTheme();
-  const location = useLocation();
-  const navigate = useNavigate();
   const [unassignLoading, setUnassignLoading] = useState({});
   const [selectedReviewers, setSelectedReviewers] = useState({});
 
@@ -88,7 +66,6 @@ export default function Home({
   const [unassignedCount, setUnassignedCount] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
 
-  const [questions, setQuestions] = useState([]);
   const [processQuesCount, setProcessQuesCount] = useState(0);
   const [assignedQuesCount, setAssignedQuesCount] = useState(0);
   const [unassignedQuesCount, setUnassignedQuesCount] = useState(0);
@@ -109,16 +86,53 @@ export default function Home({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [questionToEdit, setQuestionToEdit] = useState(null);
   const [matchedArray, setMatchedArray] = useState([]);
-  console.log(matchedArray, "matchedArray");
 
   const [showInput, setShowInput] = useState(false);
   const [loadingsend, setLoadingsend] = useState(false);
-  console.log(loadingsend, "loadingsend");
 
   const [inputValue, setInputValue] = useState("");
 
-  const [toasterNotification, setToasterNotification] = useState(null); // New state for toaster notification
+  const [toasterNotification, setToasterNotification] = useState(null);
   const documentAnalysisRef = useRef(null);
+
+  const [aiAnalysisLoading1, setAiAnalysisLoading1] = useState(false);
+  const [currentAnalyzingId, setCurrentAnalyzingId] = useState(null);
+  const [analysisResult, setAnalysisResult] = useState({});
+
+  const handleAnalyzeQuestion = async (question) => {
+    try {
+      setAiAnalysisLoading(true);
+      setCurrentAnalyzingId(question.question_id);
+
+      const session = JSON.parse(localStorage.getItem("session"));
+      if (!session?.token) return;
+
+      const headers = {
+        ...NGROK_HEADERS,
+        Authorization: `Bearer ${session.token}`,
+      };
+
+      const url = `${API_BASE_URL}/analyze-question?rfp_id=${question.rfp_id}&question_id=${question.question_id}`;
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers,
+      });
+
+      const data = await res.json();
+
+      // ✅ Save analysis result for this question
+      setAnalysisResult((prev) => ({
+        ...prev,
+        [question.question_id]: data,
+      }));
+    } catch (err) {
+      console.log("Error:", err);
+    } finally {
+      setAiAnalysisLoading(false);
+      setCurrentAnalyzingId(null);
+    }
+  };
 
   useEffect(() => {
     if (assignedQuestions.length > 0) {
@@ -127,8 +141,6 @@ export default function Home({
   }, [assignedQuestions]);
 
   const handleFilterClick = (status) => {
-    console.log(status, "statushdfglhjdfglhjfglojhlfgj");
-
     setFilterStatus(status);
 
     if (status === "all") {
@@ -153,10 +165,6 @@ export default function Home({
         (q) => !q.status || q.status === "process"
       ).length;
       const totalCount = assignedQuestions.length;
-      // const submittedCount = showalldata.filter(q => q.submit_status === "submitted").length;
-      // const notSubmittedCount = showalldata.filter(q => q.submit_status === "not submitted").length;
-      // const processCount = showalldata.filter(q => q.submit_status === "process").length;
-      // const totalCount = showalldata.length;
 
       setAssignedQuesCount(submittedCount);
       setUnassignedQuesCount(notSubmittedCount);
@@ -194,7 +202,6 @@ export default function Home({
         const data = await res.json();
 
         const { assigned_count, unassigned_count, total_questions } = data;
-        console.log(data, "datadsfdsfds");
 
         setAssignedCount(assigned_count);
         setUnassignedCount(unassigned_count);
@@ -262,17 +269,7 @@ export default function Home({
             status
           )}`;
           res = await fetch(url, { headers });
-        }
-        // else if (parsedSession.role === "admin") {
-
-        //   url = `${API_BASE_URL}/admin/filter-questions-by-user/${encodeURIComponent(
-        //     status
-        //   )}`;
-        //   console.log(url,res,"url");
-
-        //   res = await fetch(url, { headers });
-        // }
-        else {
+        } else {
           console.warn(
             "No specific filter criteria met for fetching questions."
           );
@@ -281,14 +278,9 @@ export default function Home({
 
         if (res && res.ok) {
           const data = await res.json();
-          console.log(data, "data11111");
 
           const { count, questions: statusQuestions } = data;
-          //              submittedCount = data.questions.filter(q => q.submit_status === "submitted").length;
-          //  notSubmittedCount = data.questions.filter(q => q.submit_status === "not submitted").length;
-          //  processCount = data.questions.filter(q => q.submit_status === "process").length;
-          //  allQuestions = data.questions.length;
-          setshowalldata(data.questions);
+
           if (status === "submitted") submittedCount = count || 0;
           else if (status === "not submitted") notSubmittedCount = count || 0;
           else if (status === "process") processCount = count || 0;
@@ -309,7 +301,6 @@ export default function Home({
       setProcessQuesCount(processCount);
       setUnassignedQuesCount(notSubmittedCount);
       setTotalQuestionsCount(submittedCount + notSubmittedCount + processCount);
-      setQuestions(allQuestions);
     } catch (err) {
       console.error("Error fetching filter questions data:", err);
       setErrorQuestions(`An error occurred: ${err.message}`);
@@ -354,72 +345,6 @@ export default function Home({
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
-
-  const updateQuestionStatus = useCallback(
-    async (questionId, newStatus) => {
-      setIsLoadingQuestions(true);
-      setErrorQuestions(null);
-      try {
-        const session = localStorage.getItem("session");
-        if (!session) {
-          console.error("No session found");
-          setErrorQuestions("No session found. Please log in again.");
-          navigate("/login");
-          return;
-        }
-
-        const parsedSession = JSON.parse(session);
-        const token = parsedSession.token;
-        if (!token) {
-          console.error("No token found");
-          setErrorQuestions(
-            "No authentication token found. Please log in again."
-          );
-          navigate("/login");
-          return;
-        }
-
-        const headers = {
-          ...NGROK_HEADERS,
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        };
-        const url = `${API_BASE_URL}/submit?question_id=${questionId}&status=${encodeURIComponent(
-          newStatus
-        )}`;
-
-        const res = await fetch(url, {
-          method: "PATCH",
-          headers,
-          body: JSON.stringify({}),
-        });
-
-        if (res.ok) {
-          await fetchFilterQuestions();
-        } else {
-          const errorText = await res.text();
-          console.error(
-            "Failed to update question status:",
-            res.status,
-            res.statusText,
-            errorText
-          );
-          setErrorQuestions(
-            `Failed to update status: ${res.status} ${res.statusText} - ${errorText}`
-          );
-          if (res.status === 401) {
-            navigate("/login");
-          }
-        }
-      } catch (err) {
-        console.error("Error updating question status:", err);
-        setErrorQuestions(`An error occurred: ${err.message}`);
-      } finally {
-        setIsLoadingQuestions(false);
-      }
-    },
-    [fetchFilterQuestions, navigate]
-  );
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -599,8 +524,6 @@ export default function Home({
     fetchAssignedQuestions();
   }, [userRole, API_BASE_URL, SUBMIT_CHECK_URL]);
 
-  useEffect(() => {}, [assignedQuestions]);
-
   useEffect(() => {
     const fetchSubmittedQuestions = async () => {
       if (
@@ -707,18 +630,12 @@ export default function Home({
   }, [submissionStatus, currentUser]);
 
   useEffect(() => {
-    if (!API_BASE_URL) {
-      setUsersLoading(false);
-      return;
-    }
-
     const session = localStorage.getItem("session");
     if (session) {
       try {
         const parsedSession = JSON.parse(session);
         if (parsedSession.role === "admin") {
           const fetchUsers = async () => {
-            setUsersLoading(true);
             try {
               const session = localStorage.getItem("session");
               const token = session ? JSON.parse(session).token : null;
@@ -737,8 +654,6 @@ export default function Home({
             } catch (err) {
               console.error("Error fetching users:", err);
               setUsers([]);
-            } finally {
-              setUsersLoading(false);
             }
           };
           if (!calledUserRef.current) {
@@ -854,14 +769,6 @@ export default function Home({
       JSON.stringify(reviewersArray)
     );
   };
-
-  const handleAnswerChange = useCallback((idx, value) => {
-    setAnswers((prev) => {
-      const updated = [...prev];
-      updated[idx] = value;
-      return updated;
-    });
-  }, []);
 
   const handleAssign = useCallback((idx) => {
     setAssignDropdown(idx);
@@ -1054,7 +961,6 @@ export default function Home({
           );
 
           if (res.ok) {
-            // ✅ Update status
             setSubmissionStatus((prev) => ({
               ...prev,
               [question_id]: "saved",
@@ -1064,9 +970,8 @@ export default function Home({
               [question_id]: null,
             }));
 
-            // ✅ Update versions after save
             try {
-              const updatedData = await res.json(); // if API returns version;
+              const updatedData = await res.json();
 
               if (updatedData?.version) {
                 setResponseVersions((prev) => ({
@@ -1077,7 +982,6 @@ export default function Home({
                   ],
                 }));
               } else {
-                // fallback: fetch from server if version not in response
                 await checkExistingVersions(question_id);
               }
             } catch (err) {
@@ -1351,7 +1255,6 @@ export default function Home({
   );
 
   const handleAnswerResponse = (question_id) => {
-    console.log(question_id, "question_id");
     setSubmissionStatus((prev) => ({
       ...prev,
       [question_id]: "submitted",
@@ -1371,8 +1274,6 @@ export default function Home({
 
   const handleUpdateSubmit = useCallback(
     async (question_id, answer) => {
-      console.log(question_id, "question_id");
-
       setSubmissionError((prev) => ({ ...prev, [question_id]: null }));
       try {
         const session = localStorage.getItem("session");
@@ -1469,8 +1370,6 @@ export default function Home({
 
   const handleSubmit = useCallback(
     async (question_id, answer) => {
-      console.log(question_id, "question_id");
-
       if (
         submissionStatus[question_id] === "submitted" ||
         submissionStatus[question_id] === "not submitted"
@@ -1676,8 +1575,6 @@ export default function Home({
       assignedQuestions.length > 0 &&
       (userRole === "reviewer" || selfAssignMode)
     ) {
-      console.log(selfAssignMode, "selfAssignMode");
-
       assignedQuestions.forEach((question) => {
         checkExistingVersions(question.question_id);
       });
@@ -2052,17 +1949,13 @@ export default function Home({
     setSelectedPdf(null);
   }, [pageType]);
 
-  const fetchPdfList = useCallback(async () => {
-    // ... existing code ...
-  }, []);
-
   const handleEditSave = useCallback(
     async (question_id, newAnswer) => {
       try {
         const session = localStorage.getItem("session");
         if (!session) {
           console.error("No session found");
-          // Handle error, maybe redirect to login or show a message
+
           return;
         }
 
@@ -2071,7 +1964,7 @@ export default function Home({
 
         if (!token) {
           console.error("No token found");
-          // Handle error
+
           return;
         }
 
@@ -2100,11 +1993,9 @@ export default function Home({
             res.statusText,
             await res.text()
           );
-          // Handle error, show message to user
         }
       } catch (err) {
         console.error("Error saving answer from dialog:", err);
-        // Handle error
       }
     },
     [API_BASE_URL]
@@ -2113,7 +2004,6 @@ export default function Home({
   const handleSendReview = useCallback(
     async (question) => {
       try {
-        // Set loading for this question
         setLoadingReassign((prev) => ({
           ...prev,
           [question.question_id]: true,
@@ -2167,7 +2057,6 @@ export default function Home({
         });
         console.error("Error:", err);
       } finally {
-        // Remove loading for this question
         setLoadingReassign((prev) => ({
           ...prev,
           [question.question_id]: false,
@@ -2257,8 +2146,6 @@ export default function Home({
       user_id: data.user_id,
     };
 
-    console.log(payload, "payload");
-
     try {
       const res = await fetch(`${API_BASE_URL}/questions/chat_input`, {
         method: "POST",
@@ -2271,7 +2158,6 @@ export default function Home({
       });
 
       const chatResponse = await res.json();
-      console.log("Chat Response:", chatResponse);
 
       if (chatResponse?.new_answer_version?.answer) {
         const newAnswer = chatResponse.new_answer_version.answer;
@@ -2280,23 +2166,19 @@ export default function Home({
           ...prev,
           [data.question_id]: false,
         }));
-        setInputValue(""); // optional: input clear karna ho to
-
-        // Update assignedQuestions
+        setInputValue("");
         setAssignedQuestions((prev) =>
           prev.map((q) =>
             q.question_id === data.question_id ? { ...q, answer: newAnswer } : q
           )
         );
 
-        // Update matchedArray (if UI depends on it)
         setMatchedArray((prev) =>
           prev.map((q) =>
             q.question_id === data.question_id ? { ...q, answer: newAnswer } : q
           )
         );
 
-        // Update versions
         setResponseVersions((prev) => ({
           ...prev,
           [data.question_id]: [newAnswer, ...(prev[data.question_id] || [])],
@@ -2312,7 +2194,6 @@ export default function Home({
           [data.question_id]: null,
         }));
       } else {
-        // fallback: reload versions
         await checkExistingVersions(data.question_id);
       }
     } catch (error) {
@@ -2332,7 +2213,6 @@ export default function Home({
         }`}
       >
         <div className="max-w-7xl mx-auto">
-          {/* Add back button for admin in self-assign mode */}
           {selfAssignMode && (
             <div className="mb-6 flex justify-between items-center">
               <div>
@@ -2355,7 +2235,6 @@ export default function Home({
             </div>
           )}
 
-          {/* Rest of your reviewer dashboard code */}
           {isLoadingQuestions ? (
             <div className="flex justify-center items-center py-4">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500"></div>
@@ -2736,6 +2615,7 @@ export default function Home({
                                       Continue Editing
                                     </button>
                                   )}
+
                                   {editingAnswer[question.question_id] &&
                                     submissionStatus[question.question_id] ===
                                       "submitted" && (
@@ -2758,6 +2638,63 @@ export default function Home({
                                         Submit
                                       </button>
                                     )}
+                                  {submissionStatus[question.question_id] ===
+                                    "submitted" && (
+                                    <>
+                                      <button
+                                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                                        onClick={() =>
+                                          handleAnalyzeQuestion(question)
+                                        }
+                                        type="button"
+                                        disabled={
+                                          aiAnalysisLoading &&
+                                          currentAnalyzingId ===
+                                            question.question_id
+                                        }
+                                      >
+                                        {aiAnalysisLoading &&
+                                        currentAnalyzingId ===
+                                          question.question_id ? (
+                                          <div className="flex items-center">
+                                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                                            Analyzing...
+                                          </div>
+                                        ) : (
+                                          "AI Analysis"
+                                        )}
+                                      </button>
+                                      {analysisResult[question.question_id] && (
+                                        <div className="mb-3 p-3 bg-gray-100 rounded-lg shadow-sm border text-sm">
+                                          <div>
+                                            <strong>Score:</strong>{" "}
+                                            {
+                                              analysisResult[
+                                                question.question_id
+                                              ].score
+                                            }
+                                          </div>
+                                          <div>
+                                            <strong>Question:</strong>{" "}
+                                            {
+                                              analysisResult[
+                                                question.question_id
+                                              ].question_text
+                                            }
+                                          </div>
+                                          <div>
+                                            <strong>Answer:</strong>{" "}
+                                            {
+                                              analysisResult[
+                                                question.question_id
+                                              ].answer
+                                            }
+                                          </div>
+                                        </div>
+                                      )}
+                                    </>
+                                  )}
+
                                   {(!submissionStatus[question.question_id] ||
                                     submissionStatus[question.question_id] ===
                                       "saved") &&
@@ -2851,6 +2788,7 @@ export default function Home({
                                       )}
                                     </button>
                                   )}
+
                                   {(!submissionStatus[question.question_id] ||
                                     submissionStatus[question.question_id] ===
                                       "saved") &&
@@ -3218,7 +3156,6 @@ export default function Home({
           isDarkMode ? "bg-gray-900" : "bg-gray-50"
         }`}
       >
-        {/* {pageType === "home" && <EnhancedUploadPdf setPdfList={setPdfList} />} */}
         <div className="max-w-7xl mx-auto">
           <div className="mb-1">
             {pageType === "home" ? (
@@ -3761,7 +3698,7 @@ export default function Home({
                       isDarkMode ? "text-white" : "text-gray-900"
                     }`}
                   >
-                    Document Library
+                    Responses in Process
                   </h2>
                 </div>
                 {pdfLoading ? (
@@ -3791,7 +3728,6 @@ export default function Home({
                               }`
                             : ""
                         }`}
-                        // onClick={() => setSelectedPdf(pdf)}
                         onClick={() => {
                           setSelectedPdf(pdf);
 
@@ -4144,15 +4080,23 @@ export default function Home({
                                                   </div>
                                                   <div className="max-h-40 overflow-y-auto space-y-2">
                                                     {users
-                                                      .filter(
-                                                        (user) =>
+                                                      .filter((user) => {
+                                                        const isVerifiedUser =
+                                                          user.is_verified ===
+                                                          true;
+                                                        const isValidRole =
                                                           user.role &&
                                                           (user.role.toLowerCase() ===
                                                             "reviewer" ||
                                                             user.role.toLowerCase() ===
-                                                              "admin")
-                                                        // && user.email !== userName
-                                                      )
+                                                              "admin");
+
+                                                        return (
+                                                          isVerifiedUser &&
+                                                          isValidRole
+                                                        );
+                                                      })
+
                                                       .map((user, i) => {
                                                         const assignedUsers =
                                                           assignStatus[
@@ -4227,7 +4171,6 @@ export default function Home({
                                                                   if (
                                                                     isChecked
                                                                   ) {
-                                                                    // Add reviewer
                                                                     setSelectedReviewers(
                                                                       (
                                                                         prev
@@ -4241,7 +4184,6 @@ export default function Home({
                                                                       })
                                                                     );
                                                                   } else {
-                                                                    // Remove reviewer from state
                                                                     setSelectedReviewers(
                                                                       (
                                                                         prev
@@ -4258,7 +4200,6 @@ export default function Home({
                                                                       })
                                                                     );
 
-                                                                    // Call unassign API
                                                                     handleUnassign(
                                                                       globalIdx,
                                                                       user

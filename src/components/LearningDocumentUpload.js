@@ -1,12 +1,6 @@
 import React, { useState, useRef } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
-const NGROK_HEADERS = {
-  accept: "application/json",
-  "ngrok-skip-browser-warning": "true",
-};
-
 export default function LearningDocumentUpload({ onUploadComplete, userRole }) {
   const { isDarkMode } = useTheme();
   const [dragActive, setDragActive] = useState(false);
@@ -55,7 +49,6 @@ export default function LearningDocumentUpload({ onUploadComplete, userRole }) {
     },
   ];
 
-  // Only show upload functionality for admins
   if (userRole === "reviewer") {
     return (
       <div
@@ -130,7 +123,7 @@ export default function LearningDocumentUpload({ onUploadComplete, userRole }) {
       const fileExtension = "." + file.name.split(".").pop().toLowerCase();
       return (
         validTypes.includes(fileExtension) && file.size <= 50 * 1024 * 1024
-      ); // 50MB limit
+      );
     });
 
     setSelectedFiles(validFiles);
@@ -157,7 +150,6 @@ export default function LearningDocumentUpload({ onUploadComplete, userRole }) {
         formData.append("document_type", documentType);
         formData.append("category", "learning");
 
-        // Simulate progress
         const progressInterval = setInterval(() => {
           setUploadProgress((prev) => Math.min(prev + 5, 90));
         }, 100);
@@ -167,23 +159,14 @@ export default function LearningDocumentUpload({ onUploadComplete, userRole }) {
           ...(token && { Authorization: `Bearer ${token}` }),
         };
 
-        // For now, simulate the upload since the API endpoint might not exist
         await new Promise((resolve) => setTimeout(resolve, 2000));
 
         clearInterval(progressInterval);
         setUploadProgress(100);
 
-        // In a real implementation, you would make the actual API call:
-        // const response = await fetch(`${API_BASE_URL}/upload-learning-document`, {
-        //   method: "POST",
-        //   headers,
-        //   body: formData,
-        // });
-
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
-      // Reset form
       setSelectedFiles([]);
       setUploadProgress(0);
 
@@ -214,7 +197,6 @@ export default function LearningDocumentUpload({ onUploadComplete, userRole }) {
       }`}
     >
       <div className="p-6">
-        {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="w-2 h-8 bg-purple-500 rounded-full"></div>
           <h2
@@ -226,7 +208,6 @@ export default function LearningDocumentUpload({ onUploadComplete, userRole }) {
           </h2>
         </div>
 
-        {/* Document Type Selection */}
         <div className="mb-6">
           <label
             className={`block text-sm font-medium mb-3 transition-colors ${
@@ -270,7 +251,6 @@ export default function LearningDocumentUpload({ onUploadComplete, userRole }) {
           </div>
         </div>
 
-        {/* File Upload Area */}
         <div
           className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-all ${
             dragActive
@@ -321,7 +301,6 @@ export default function LearningDocumentUpload({ onUploadComplete, userRole }) {
           </button>
         </div>
 
-        {/* Selected Files */}
         {selectedFiles.length > 0 && (
           <div className="mt-6">
             <h4
@@ -373,7 +352,6 @@ export default function LearningDocumentUpload({ onUploadComplete, userRole }) {
           </div>
         )}
 
-        {/* Upload Progress */}
         {uploading && (
           <div className="mt-6">
             <div className="flex items-center gap-3 mb-2">
@@ -395,7 +373,6 @@ export default function LearningDocumentUpload({ onUploadComplete, userRole }) {
           </div>
         )}
 
-        {/* Upload Button */}
         {selectedFiles.length > 0 && !uploading && (
           <div className="mt-6 flex justify-end">
             <button

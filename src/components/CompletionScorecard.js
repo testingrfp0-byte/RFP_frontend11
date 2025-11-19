@@ -22,7 +22,7 @@ export default function CompletionScorecard({ selectedPdf, pdfDetails }) {
 
   const fetchCompletionStatus = async () => {
     if (!API_BASE_URL || !selectedPdf) return;
-    
+
     setLoading(true);
     try {
       const session = localStorage.getItem("session");
@@ -32,23 +32,30 @@ export default function CompletionScorecard({ selectedPdf, pdfDetails }) {
         ...(token && { Authorization: `Bearer ${token}` }),
       };
 
-      // Fetch completion status for all questions
-      const response = await fetch(`${API_BASE_URL}/completion-status/${selectedPdf.id}`, {
-        headers,
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/completion-status/${selectedPdf.id}`,
+        {
+          headers,
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
         setCompletionData(data);
       } else {
-        // Mock completion data if API doesn't exist yet
         const mockData = {};
         pdfDetails.questions.forEach((q, index) => {
           mockData[q.id] = {
-            status: index % 3 === 0 ? "completed" : index % 3 === 1 ? "in_progress" : "not_started",
+            status:
+              index % 3 === 0
+                ? "completed"
+                : index % 3 === 1
+                ? "in_progress"
+                : "not_started",
             assignedTo: index % 2 === 0 ? "john.doe@example.com" : null,
             lastUpdated: new Date().toISOString(),
-            completionPercentage: index % 3 === 0 ? 100 : index % 3 === 1 ? 65 : 0,
+            completionPercentage:
+              index % 3 === 0 ? 100 : index % 3 === 1 ? 65 : 0,
           };
         });
         setCompletionData(mockData);
@@ -64,16 +71,14 @@ export default function CompletionScorecard({ selectedPdf, pdfDetails }) {
     if (!pdfDetails?.questions) return;
 
     const grouped = {};
-    
+
     pdfDetails.questions.forEach((question, index) => {
-      // Extract section number from question text (e.g., "3.2.1", "3.2.2", etc.)
       const sectionMatch = question.question_text.match(/^(\d+\.?\d*\.?\d*)/);
       const sectionNumber = sectionMatch ? sectionMatch[1] : "General";
-      
-      // Extract main section (e.g., "3.2" from "3.2.1")
+
       const mainSectionMatch = sectionNumber.match(/^(\d+\.?\d*)/);
       const mainSection = mainSectionMatch ? mainSectionMatch[1] : "General";
-      
+
       if (!grouped[mainSection]) {
         grouped[mainSection] = {
           title: `Section ${mainSection}`,
@@ -83,7 +88,7 @@ export default function CompletionScorecard({ selectedPdf, pdfDetails }) {
           inProgressQuestions: 0,
         };
       }
-      
+
       const status = completionData[question.id]?.status || "not_started";
       grouped[mainSection].questions.push({
         ...question,
@@ -91,9 +96,10 @@ export default function CompletionScorecard({ selectedPdf, pdfDetails }) {
         sectionNumber,
         status,
         assignedTo: completionData[question.id]?.assignedTo,
-        completionPercentage: completionData[question.id]?.completionPercentage || 0,
+        completionPercentage:
+          completionData[question.id]?.completionPercentage || 0,
       });
-      
+
       grouped[mainSection].totalQuestions++;
       if (status === "completed") {
         grouped[mainSection].completedQuestions++;
@@ -134,11 +140,11 @@ export default function CompletionScorecard({ selectedPdf, pdfDetails }) {
   const calculateOverallProgress = () => {
     const totalQuestions = pdfDetails?.questions?.length || 0;
     if (totalQuestions === 0) return 0;
-    
+
     const completedQuestions = Object.values(completionData).filter(
       (data) => data.status === "completed"
     ).length;
-    
+
     return Math.round((completedQuestions / totalQuestions) * 100);
   };
 
@@ -201,7 +207,6 @@ export default function CompletionScorecard({ selectedPdf, pdfDetails }) {
       }`}
     >
       <div className="p-6">
-        {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="w-2 h-8 bg-purple-500 rounded-full"></div>
           <h2
@@ -235,7 +240,6 @@ export default function CompletionScorecard({ selectedPdf, pdfDetails }) {
           </div>
         ) : (
           <>
-            {/* Overall Progress */}
             <div
               className={`rounded-lg p-4 mb-6 transition-colors ${
                 isDarkMode
@@ -259,10 +263,12 @@ export default function CompletionScorecard({ selectedPdf, pdfDetails }) {
                   {overallProgress}%
                 </span>
               </div>
-              
+
               <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
                 <div
-                  className={`h-3 rounded-full transition-all duration-500 ${getProgressBarColor(overallProgress)}`}
+                  className={`h-3 rounded-full transition-all duration-500 ${getProgressBarColor(
+                    overallProgress
+                  )}`}
                   style={{ width: `${overallProgress}%` }}
                 ></div>
               </div>
@@ -319,7 +325,6 @@ export default function CompletionScorecard({ selectedPdf, pdfDetails }) {
               </div>
             </div>
 
-            {/* Questions by Section */}
             <div className="space-y-4">
               {Object.entries(groupedQuestions).map(([sectionKey, section]) => (
                 <div
@@ -330,7 +335,6 @@ export default function CompletionScorecard({ selectedPdf, pdfDetails }) {
                       : "bg-gray-50 border-gray-200"
                   }`}
                 >
-                  {/* Section Header */}
                   <div
                     className={`p-4 border-b transition-colors ${
                       isDarkMode
@@ -352,15 +356,22 @@ export default function CompletionScorecard({ selectedPdf, pdfDetails }) {
                             isDarkMode ? "text-gray-400" : "text-gray-600"
                           }`}
                         >
-                          {section.completedQuestions}/{section.totalQuestions} completed
+                          {section.completedQuestions}/{section.totalQuestions}{" "}
+                          completed
                         </span>
                         <div className="w-20 bg-gray-200 rounded-full h-2">
                           <div
                             className={`h-2 rounded-full ${getProgressBarColor(
-                              (section.completedQuestions / section.totalQuestions) * 100
+                              (section.completedQuestions /
+                                section.totalQuestions) *
+                                100
                             )}`}
                             style={{
-                              width: `${(section.completedQuestions / section.totalQuestions) * 100}%`,
+                              width: `${
+                                (section.completedQuestions /
+                                  section.totalQuestions) *
+                                100
+                              }%`,
                             }}
                           ></div>
                         </div>
@@ -368,7 +379,6 @@ export default function CompletionScorecard({ selectedPdf, pdfDetails }) {
                     </div>
                   </div>
 
-                  {/* Section Questions */}
                   <div className="p-4 space-y-3">
                     {section.questions.map((question) => (
                       <div
@@ -408,7 +418,9 @@ export default function CompletionScorecard({ selectedPdf, pdfDetails }) {
                               <div className="w-16 bg-gray-200 rounded-full h-1.5">
                                 <div
                                   className="bg-yellow-500 h-1.5 rounded-full transition-all"
-                                  style={{ width: `${question.completionPercentage}%` }}
+                                  style={{
+                                    width: `${question.completionPercentage}%`,
+                                  }}
                                 ></div>
                               </div>
                               <span
@@ -425,7 +437,8 @@ export default function CompletionScorecard({ selectedPdf, pdfDetails }) {
                               question.status
                             )}`}
                           >
-                            {getStatusIcon(question.status)} {question.status.replace("_", " ")}
+                            {getStatusIcon(question.status)}{" "}
+                            {question.status.replace("_", " ")}
                           </span>
                         </div>
                       </div>

@@ -1,36 +1,36 @@
-import React, { useState } from 'react';
-import { useTheme } from '../contexts/ThemeContext';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useTheme } from "../contexts/ThemeContext";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 function ChangePassword() {
   const { isDarkMode } = useTheme();
-  const [oldPassword, setOldPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setMessage('');
+    setError("");
+    setMessage("");
 
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match.');
+      setError("Passwords do not match.");
       return;
     }
 
     if (oldPassword === newPassword) {
-      setError('New password cannot be the same as the old password.');
+      setError("New password cannot be the same as the old password.");
       return;
     }
 
     if (newPassword.length < 8) {
-      setError('Password must be at least 8 characters long.');
+      setError("Password must be at least 8 characters long.");
       return;
     }
 
@@ -47,27 +47,31 @@ function ChangePassword() {
       const token = parsedSession.token;
       if (!token) {
         console.error("No token found");
-        setError(
-          "No authentication token found. Please log in again."
-        );
+        setError("No authentication token found. Please log in again.");
         navigate("/login");
         return;
       }
       const headers = {
-        // No 'Content-Type' header when sending FormData, browser sets it automatically
         "ngrok-skip-browser-warning": "true",
         ...(token && { Authorization: `Bearer ${token}` }),
       };
-      const response = await axios.put(`${API_BASE_URL}/change-password`, {
-        old_password: oldPassword,
-        new_password: newPassword,
-      }, { headers });
-      setMessage(response.data.message || 'Password changed successfully!');
-      setOldPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      const response = await axios.put(
+        `${API_BASE_URL}/change-password`,
+        {
+          old_password: oldPassword,
+          new_password: newPassword,
+        },
+        { headers }
+      );
+      setMessage(response.data.message || "Password changed successfully!");
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to change password. Please try again.');
+      setError(
+        err.response?.data?.message ||
+          "Failed to change password. Please try again."
+      );
     }
   };
 

@@ -10,7 +10,6 @@ import Register from "./pages/Register";
 import AdminRegister from "./pages/AdminRegister";
 import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
-import UploadPdf from "./pages/UploadPdf";
 import EnhancedUploadPdf from "./pages/EnhancedUploadPdf";
 import TeamUser from "./pages/TeamUser";
 import ReviewerAssignedQuestions from "./pages/ReviewerAssignedQuestions";
@@ -33,12 +32,18 @@ function Layout({ userName, userRole, onLogout, userId, children }) {
   const { isDarkMode } = useTheme();
   return (
     <div
-      className={`flex min-h-screen transition-colors ${isDarkMode ? "bg-gray-900" : "bg-gray-50"
-        }`}
+      className={`flex min-h-screen transition-colors ${
+        isDarkMode ? "bg-gray-900" : "bg-gray-50"
+      }`}
     >
       <SideBar userName={userName} userRole={userRole} />
       <div className="flex-1 flex flex-col">
-        <TopBar userName={userName} userRole={userRole} onLogout={onLogout} userId={userId} />
+        <TopBar
+          userName={userName}
+          userRole={userRole}
+          onLogout={onLogout}
+          userId={userId}
+        />
         <main className="flex-1 overflow-auto">{children}</main>
       </div>
     </div>
@@ -114,7 +119,6 @@ export default function App() {
       if (!response.ok) throw new Error("Failed to fetch PDFs");
       const data = await response.json();
       setPdfList(data.filter((doc) => doc.category === "history") || []);
-
     } catch (err) {
       console.error("Error fetching PDF list:", err);
       setPdfList([]);
@@ -189,7 +193,7 @@ export default function App() {
 
   function PrivateRoute({ children }) {
     if (!sessionChecked) {
-      return null; // or loader
+      return null;
     }
     return isAuthenticated ? children : <Navigate to="/login" />;
   }
@@ -206,8 +210,36 @@ export default function App() {
           <Route path="/verify-email-otp" element={<VerifyEmailByOtp />} />
           <Route path="/register-verified" element={<RegisterVerified />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route path="/profile" element={<PrivateRoute><Layout userName={userName} userRole={userRole} onLogout={handleLogout} userId={userId}><Profile /></Layout></PrivateRoute>} />
-          <Route path="/change-password" element={<PrivateRoute><Layout userName={userName} userRole={userRole} onLogout={handleLogout} userId={userId}><ChangePassword /></Layout></PrivateRoute>} />
+          <Route
+            path="/profile"
+            element={
+              <PrivateRoute>
+                <Layout
+                  userName={userName}
+                  userRole={userRole}
+                  onLogout={handleLogout}
+                  userId={userId}
+                >
+                  <Profile />
+                </Layout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/change-password"
+            element={
+              <PrivateRoute>
+                <Layout
+                  userName={userName}
+                  userRole={userRole}
+                  onLogout={handleLogout}
+                  userId={userId}
+                >
+                  <ChangePassword />
+                </Layout>
+              </PrivateRoute>
+            }
+          />
 
           <Route
             path="/"
@@ -346,7 +378,6 @@ export default function App() {
             }
           />
 
-
           <Route
             path="/submitted-questions/:documentId"
             element={
@@ -395,7 +426,6 @@ export default function App() {
             }
           />
 
-          {/* Catch-all route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>

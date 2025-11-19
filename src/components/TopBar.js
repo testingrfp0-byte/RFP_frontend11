@@ -1,13 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "../contexts/ThemeContext";
-import { useUser } from "../contexts/UserContext"; // Import useUser
+import { useUser } from "../contexts/UserContext";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 export default function TopBar({ userName, userRole, onLogout, userId }) {
   const { isDarkMode, toggleTheme } = useTheme();
   const { userProfileImage } = useUser();
-  
 
   return (
     <div
@@ -38,7 +36,6 @@ export default function TopBar({ userName, userRole, onLogout, userId }) {
       </div>
 
       <div className="flex items-center space-x-3">
-        {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
           className={`p-2 rounded-lg transition-all duration-200 focus:outline-none ${
@@ -49,7 +46,6 @@ export default function TopBar({ userName, userRole, onLogout, userId }) {
           title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
         >
           {isDarkMode ? (
-            // Sun icon for light mode
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path
                 fillRule="evenodd"
@@ -58,14 +54,12 @@ export default function TopBar({ userName, userRole, onLogout, userId }) {
               />
             </svg>
           ) : (
-            // Moon icon for dark mode
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
             </svg>
           )}
         </button>
 
-        {/* User Profile */}
         <div
           className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
             isDarkMode ? "bg-gray-700" : "bg-gray-100"
@@ -73,7 +67,11 @@ export default function TopBar({ userName, userRole, onLogout, userId }) {
         >
           <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
             {userProfileImage ? (
-              <img src={API_BASE_URL + '/' + userProfileImage} alt="User Avatar" className="w-full h-full rounded-full object-cover" />
+              <img
+                src={API_BASE_URL + "/" + userProfileImage}
+                alt="User Avatar"
+                className="w-full h-full rounded-full object-cover"
+              />
             ) : (
               <span className="text-white text-sm">👤</span>
             )}
@@ -96,7 +94,6 @@ export default function TopBar({ userName, userRole, onLogout, userId }) {
           </div>
         </div>
 
-        {/* Logout Button */}
         <button
           onClick={onLogout}
           className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
