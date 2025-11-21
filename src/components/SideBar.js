@@ -246,7 +246,7 @@ export default function SideBar({ userName }) {
                   }
                 >
                   <span className="text-lg">📋</span>
-                  RFP Report
+                  Proposals
                 </NavLink>
               </>
             )}

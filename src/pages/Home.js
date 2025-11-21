@@ -28,8 +28,10 @@ export default function Home({
   const navigate = useNavigate();
   const [deleteMessage, setDeleteMessage] = useState("");
   const [selectedPdf, setSelectedPdf] = useState(null);
-
+  const [showInput, setShowInput] = useState(false);
+  const [newQuestion, setNewQuestion] = useState("");
   const [pdfDetails, setPdfDetails] = useState(null);
+
   const [expandedSummary, setExpandedSummary] = useState(false);
   const [expandedQuestion, setExpandedQuestion] = useState(null);
   const [assignDropdown, setAssignDropdown] = useState(null);
@@ -87,7 +89,7 @@ export default function Home({
   const [questionToEdit, setQuestionToEdit] = useState(null);
   const [matchedArray, setMatchedArray] = useState([]);
 
-  const [showInput, setShowInput] = useState(false);
+  const [showInput1, setShowInput1] = useState(false);
   const [loadingsend, setLoadingsend] = useState(false);
 
   const [inputValue, setInputValue] = useState("");
@@ -768,6 +770,36 @@ export default function Home({
       `selectedReviewers_${selectedPdf.id}`,
       JSON.stringify(reviewersArray)
     );
+  };
+
+  const handleAddQuestion = async (id) => {
+    const session = localStorage.getItem("session");
+    const token = session ? JSON.parse(session).token : null;
+
+    try {
+      const headers = {
+        ...NGROK_HEADERS,
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      };
+
+      const response = await fetch(`${API_BASE_URL}/add/questions/${id}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          questions: [newQuestion],
+        }),
+      });
+
+      const data = await response.json();
+      console.log("Response:", data);
+
+      // Reset states
+      setNewQuestion("");
+      setShowInput1(false);
+    } catch (error) {
+      console.error("Error:", error);
+    }
   };
 
   const handleAssign = useCallback((idx) => {
@@ -2511,15 +2543,17 @@ export default function Home({
                                   Your Response:
                                 </label>
                                 <textarea
-                                  className={`w-full p-3 rounded-lg transition-colors resize-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 ${
-                                    isDarkMode
-                                      ? "bg-gray-800 border border-gray-600 text-white placeholder-gray-400"
-                                      : "bg-white border border-gray-300 text-gray-900 placeholder-gray-500"
-                                  } ${
-                                    !editingAnswer[question.question_id]
-                                      ? "cursor-not-allowed opacity-75"
-                                      : "cursor-text"
-                                  }`}
+                                  className={`w-full p-3 rounded-lg transition-colors resize-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 
+    ${
+      isDarkMode
+        ? "bg-gray-800 border border-gray-600 text-white placeholder-gray-400"
+        : "bg-white border border-gray-300 text-gray-900 placeholder-gray-500"
+    } 
+    ${
+      editingAnswer[question.question_id]
+        ? "border-2 border-yellow-500"
+        : "cursor-not-allowed opacity-75"
+    }`}
                                   placeholder="Type your detailed answer here..."
                                   rows="8"
                                   value={question.answer || ""}
@@ -2638,62 +2672,6 @@ export default function Home({
                                         Submit
                                       </button>
                                     )}
-                                  {submissionStatus[question.question_id] ===
-                                    "submitted" && (
-                                    <>
-                                      <button
-                                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                                        onClick={() =>
-                                          handleAnalyzeQuestion(question)
-                                        }
-                                        type="button"
-                                        disabled={
-                                          aiAnalysisLoading &&
-                                          currentAnalyzingId ===
-                                            question.question_id
-                                        }
-                                      >
-                                        {aiAnalysisLoading &&
-                                        currentAnalyzingId ===
-                                          question.question_id ? (
-                                          <div className="flex items-center">
-                                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
-                                            Analyzing...
-                                          </div>
-                                        ) : (
-                                          "AI Analysis"
-                                        )}
-                                      </button>
-                                      {analysisResult[question.question_id] && (
-                                        <div className="mb-3 p-3 bg-gray-100 rounded-lg shadow-sm border text-sm">
-                                          <div>
-                                            <strong>Score:</strong>{" "}
-                                            {
-                                              analysisResult[
-                                                question.question_id
-                                              ].score
-                                            }
-                                          </div>
-                                          <div>
-                                            <strong>Question:</strong>{" "}
-                                            {
-                                              analysisResult[
-                                                question.question_id
-                                              ].question_text
-                                            }
-                                          </div>
-                                          <div>
-                                            <strong>Answer:</strong>{" "}
-                                            {
-                                              analysisResult[
-                                                question.question_id
-                                              ].answer
-                                            }
-                                          </div>
-                                        </div>
-                                      )}
-                                    </>
-                                  )}
 
                                   {(!submissionStatus[question.question_id] ||
                                     submissionStatus[question.question_id] ===
@@ -2819,123 +2797,200 @@ export default function Home({
                                         Chat Prompt
                                       </button>
                                     )}
-                                  {(userRole === "reviewer" ||
-                                    selfAssignMode) &&
-                                    generatedAnswer[question.question_id] &&
-                                    (!submissionStatus[question.question_id] ||
-                                      submissionStatus[question.question_id] ===
-                                        "saved") && (
-                                      <div className="relative">
-                                        <div className="flex items-center gap-2">
-                                          <button
-                                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                              loadingVersions[
-                                                question.question_id
-                                              ]
-                                                ? "bg-gray-400 cursor-not-allowed opacity-50"
-                                                : "bg-blue-600 hover:bg-blue-700 text-white"
-                                            }`}
-                                            onClick={() =>
-                                              toggleVersionDropdown(
-                                                question.question_id
-                                              )
-                                            }
-                                            disabled={
-                                              loadingVersions[
-                                                question.question_id
-                                              ]
-                                            }
-                                            type="button"
-                                          >
-                                            {loadingVersions[
-                                              question.question_id
-                                            ] ? (
-                                              <>
-                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                                Loading...
-                                              </>
-                                            ) : (
-                                              <>
-                                                <span>📝</span>
-                                                Versions
-                                                {responseVersions[
-                                                  question.question_id
-                                                ] &&
-                                                  responseVersions[
-                                                    question.question_id
-                                                  ].length > 0 && (
-                                                    <span className="ml-1 bg-white text-blue-600 px-1.5 py-0.5 rounded-full text-xs">
-                                                      {
-                                                        responseVersions[
-                                                          question.question_id
-                                                        ].length
-                                                      }
-                                                    </span>
-                                                  )}
-                                                <span className="ml-2">
-                                                  {showVersionDropdown[
-                                                    question.question_id
-                                                  ]
-                                                    ? "▲"
-                                                    : "▼"}
-                                                </span>
-                                              </>
-                                            )}
-                                          </button>
-                                          {(!submissionStatus[
-                                            question.question_id
-                                          ] ||
-                                            submissionStatus[
-                                              question.question_id
-                                            ] === "saved") &&
-                                            generatedAnswer[
-                                              question.question_id
-                                            ] &&
-                                            question.answer &&
-                                            question.answer.trim() !== "" && (
+                                  <>
+                                    {(userRole === "reviewer" ||
+                                      selfAssignMode) &&
+                                      generatedAnswer[question.question_id] &&
+                                      (!submissionStatus[
+                                        question.question_id
+                                      ] ||
+                                        submissionStatus[
+                                          question.question_id
+                                        ] === "saved") && (
+                                        <>
+                                          <div className="relative">
+                                            <div className="flex items-center gap-2">
                                               <button
                                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                                  submissionStatus[
+                                                  loadingVersions[
                                                     question.question_id
-                                                  ] === "submitted"
+                                                  ]
                                                     ? "bg-gray-400 cursor-not-allowed opacity-50"
-                                                    : "bg-green-600 hover:bg-green-700 text-white"
+                                                    : "bg-blue-600 hover:bg-blue-700 text-white"
                                                 }`}
                                                 onClick={() =>
-                                                  submissionStatus[
-                                                    question.question_id
-                                                  ] !== "submitted" &&
-                                                  submissionStatus[
-                                                    question.question_id
-                                                  ] !== "not submitted" &&
-                                                  handleSubmit(
+                                                  toggleVersionDropdown(
                                                     question.question_id
                                                   )
                                                 }
                                                 disabled={
-                                                  submissionStatus[
+                                                  loadingVersions[
                                                     question.question_id
-                                                  ] === "submitted" ||
-                                                  submissionStatus[
-                                                    question.question_id
-                                                  ] === "not submitted"
+                                                  ]
                                                 }
                                                 type="button"
-                                                title={
-                                                  submissionStatus[
-                                                    question.question_id
-                                                  ] === "submitted"
-                                                    ? "Question already submitted"
-                                                    : "Submit your answer"
-                                                }
                                               >
-                                                <span>✅</span>
-                                                Submit
+                                                {loadingVersions[
+                                                  question.question_id
+                                                ] ? (
+                                                  <>
+                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                                    Loading...
+                                                  </>
+                                                ) : (
+                                                  <>
+                                                    <span>📝</span>
+                                                    Versions
+                                                    {responseVersions[
+                                                      question.question_id
+                                                    ] &&
+                                                      responseVersions[
+                                                        question.question_id
+                                                      ].length > 0 && (
+                                                        <span className="ml-1 bg-white text-blue-600 px-1.5 py-0.5 rounded-full text-xs">
+                                                          {
+                                                            responseVersions[
+                                                              question
+                                                                .question_id
+                                                            ].length
+                                                          }
+                                                        </span>
+                                                      )}
+                                                    <span className="ml-2">
+                                                      {showVersionDropdown[
+                                                        question.question_id
+                                                      ]
+                                                        ? "▲"
+                                                        : "▼"}
+                                                    </span>
+                                                  </>
+                                                )}
                                               </button>
-                                            )}
-                                        </div>
-                                      </div>
-                                    )}
+                                              {(!submissionStatus[
+                                                question.question_id
+                                              ] ||
+                                                submissionStatus[
+                                                  question.question_id
+                                                ] === "saved") &&
+                                                generatedAnswer[
+                                                  question.question_id
+                                                ] && (
+                                                  <>
+                                                    <button
+                                                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                                                      onClick={() =>
+                                                        handleAnalyzeQuestion(
+                                                          question
+                                                        )
+                                                      }
+                                                      type="button"
+                                                      disabled={
+                                                        aiAnalysisLoading &&
+                                                        currentAnalyzingId ===
+                                                          question.question_id
+                                                      }
+                                                    >
+                                                      {aiAnalysisLoading &&
+                                                      currentAnalyzingId ===
+                                                        question.question_id ? (
+                                                        <div className="flex items-center">
+                                                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                                                          Analyzing...
+                                                        </div>
+                                                      ) : (
+                                                        "AI Analysis"
+                                                      )}
+                                                    </button>
+                                                  </>
+                                                )}
+                                              {(!submissionStatus[
+                                                question.question_id
+                                              ] ||
+                                                submissionStatus[
+                                                  question.question_id
+                                                ] === "saved") &&
+                                                generatedAnswer[
+                                                  question.question_id
+                                                ] &&
+                                                question.answer &&
+                                                question.answer.trim() !==
+                                                  "" && (
+                                                  <button
+                                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                                                      submissionStatus[
+                                                        question.question_id
+                                                      ] === "submitted"
+                                                        ? "bg-gray-400 cursor-not-allowed opacity-50"
+                                                        : "bg-green-600 hover:bg-green-700 text-white"
+                                                    }`}
+                                                    onClick={() =>
+                                                      submissionStatus[
+                                                        question.question_id
+                                                      ] !== "submitted" &&
+                                                      submissionStatus[
+                                                        question.question_id
+                                                      ] !== "not submitted" &&
+                                                      handleSubmit(
+                                                        question.question_id
+                                                      )
+                                                    }
+                                                    disabled={
+                                                      submissionStatus[
+                                                        question.question_id
+                                                      ] === "submitted" ||
+                                                      submissionStatus[
+                                                        question.question_id
+                                                      ] === "not submitted"
+                                                    }
+                                                    type="button"
+                                                    title={
+                                                      submissionStatus[
+                                                        question.question_id
+                                                      ] === "submitted"
+                                                        ? "Question already submitted"
+                                                        : "Submit your answer"
+                                                    }
+                                                  >
+                                                    <span>✅</span>
+                                                    Submit
+                                                  </button>
+                                                )}
+                                            </div>
+                                          </div>
+
+                                          {analysisResult[
+                                            question.question_id
+                                          ] && (
+                                            <div className="mb-3 p-3 bg-gray-100 rounded-lg shadow-sm border text-sm">
+                                              <div>
+                                                <strong>Score:</strong>{" "}
+                                                {
+                                                  analysisResult[
+                                                    question.question_id
+                                                  ].score
+                                                }
+                                              </div>
+                                              <div>
+                                                <strong>Question:</strong>{" "}
+                                                {
+                                                  analysisResult[
+                                                    question.question_id
+                                                  ].question_text
+                                                }
+                                              </div>
+                                              <div>
+                                                <strong>Answer:</strong>{" "}
+                                                {
+                                                  analysisResult[
+                                                    question.question_id
+                                                  ].answer
+                                                }
+                                              </div>
+                                            </div>
+                                          )}
+                                        </>
+                                      )}
+                                  </>
                                   {(!submissionStatus[question.question_id] ||
                                     submissionStatus[question.question_id] ===
                                       "saved") &&
@@ -3937,27 +3992,65 @@ export default function Home({
 
                       {pdfDetails?.questions_by_section?.length > 0 && (
                         <div>
-                          <div className="flex items-center gap-3 mb-4">
-                            <span className="text-purple-400 text-lg">❓</span>
-                            <h3
-                              className={`text-lg font-semibold transition-colors ${
-                                isDarkMode ? "text-white" : "text-gray-900"
-                              }`}
-                            >
-                              Questions & Responses
-                            </h3>
-                            <span className="bg-purple-500/20 text-purple-400 px-2 py-1 rounded-full text-xs">
-                              {pdfDetails.questions_by_section.reduce(
-                                (total, section) =>
-                                  total + section.questions.length,
-                                0
-                              )}{" "}
-                              questions
-                            </span>
+                          <div>
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center gap-3 mb-4">
+                                <span className="text-purple-400 text-lg">
+                                  ❓
+                                </span>
+
+                                <h3
+                                  className={`text-lg font-semibold transition-colors ${
+                                    isDarkMode ? "text-white" : "text-gray-900"
+                                  }`}
+                                >
+                                  Questions & Responses
+                                </h3>
+
+                                <span className="bg-purple-500/20 text-purple-400 px-2 py-1 rounded-full text-xs">
+                                  {pdfDetails.questions_by_section.reduce(
+                                    (total, section) =>
+                                      total + section.questions.length,
+                                    0
+                                  )}{" "}
+                                  questions
+                                </span>
+                              </div>
+
+                              <button
+                                onClick={() => setShowInput1(!showInput1)}
+                                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+                              >
+                                + Add
+                              </button>
+                            </div>
+                            {showInput1 && (
+                              <div className="mt-3 flex gap-3">
+                                <input
+                                  type="text"
+                                  value={newQuestion}
+                                  onChange={(e) =>
+                                    setNewQuestion(e.target.value)
+                                  }
+                                  placeholder="Enter question"
+                                  className="border px-3 py-2 rounded w-full text-gray-900"
+                                />
+
+                                <button
+                                  onClick={() =>
+                                    handleAddQuestion(pdfDetails.id)
+                                  }
+                                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+                                >
+                                  Submit
+                                </button>
+                              </div>
+                            )}
                           </div>
+
                           {pdfDetails.questions_by_section.map(
                             (section, sectionIdx) => (
-                              <div key={sectionIdx} className="mb-6">
+                              <div key={sectionIdx} className="mb-5 mt-3">
                                 <h4
                                   className={`text-md font-semibold mb-3 transition-colors ${
                                     isDarkMode

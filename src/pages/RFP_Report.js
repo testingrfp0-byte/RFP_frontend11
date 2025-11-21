@@ -149,7 +149,7 @@ const DocumentList = () => {
             isDarkMode ? "text-white" : "text-gray-900"
           }`}
         >
-          RFP Report
+          Proposals
         </h2>
       </div>
 
